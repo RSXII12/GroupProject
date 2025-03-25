@@ -1,0 +1,119 @@
+/* Basic styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header {
+    width: 100%;
+    background-color: #0056b3;
+    padding: 20px 0;
+    text-align: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.nav-container {
+    width: 100%;
+    background-color: #007bff;
+    padding: 15px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.w3-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    width: 60%;
+}
+
+.w3-bar a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.w3-bar a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Layout for Filters and Items */
+.main-container {
+    display: flex;
+    width: 100%;
+    margin: 20px;
+}
+
+.filters-container {
+    width: 20%;
+    height: 320px;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter {
+    margin-bottom: 20px;
+}
+
+#price-slider {
+    width: 100%;
+}
+
+/* Auction Items Section */
+.auction-items {
+    width: 70%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-left: 20px;
+}
+
+.auction-item {
+    background-color: white;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 250px;
+    text-align: center;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}

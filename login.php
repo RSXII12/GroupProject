@@ -3,7 +3,7 @@ session_start();
 
 $servername = "localhost"; 
 $dbUsername = "root"; 
-$dbPassword = "piepie665"; 
+$dbPassword = ""; 
 $dbName = "teamdatabase"; 
 
 // Connect to MySQL

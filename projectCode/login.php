@@ -6,9 +6,8 @@ $dbUsername = "295group6";
 $dbPassword = "wHiuTatMrdizq3JfNeAH"; 
 $dbName = "295group6"; 
 
-// Connect to MySQL
+// Connect to MySQL database 
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
-
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -18,9 +17,10 @@ if ($conn->connect_error) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $inputUsername = $_POST['username'];
     $inputPassword = $_POST['password'];
+    
 
     // Prepare SQL statement to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, password FROM user WHERE username = ?");
+    $stmt = $conn->prepare("SELECT userId, password FROM iBayMembers WHERE name = ?");
     $stmt->bind_param("s", $inputUsername);
     $stmt->execute();
     $stmt->store_result();
@@ -38,7 +38,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             header("Location: sellerPage.php");
             exit();
         } else {
-            echo "<script>alert('Invalid password!'); window.location.href='login.html';</script>";
+            $temp = password_hash($inputPassword, PASSWORD_DEFAULT);
+            echo "<script>alert('Invalid password! password:$inputPassword,hash:$hashedPassword,hashedPassword:$temp '); window.location.href='login.html';</script>";
         }
     } else {
         echo "<script>alert('User not found!'); window.location.href='login.html';</script>";

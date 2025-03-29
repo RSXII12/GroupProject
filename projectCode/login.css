@@ -70,27 +70,6 @@ img{
     display: flex;
     justify-content: center;
 }
-.w3-bar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: transparent;
-    width: 60%;
-}
-
-.w3-bar a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
-
-.w3-bar a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
 label {
     display: block;
     font-weight: bold;

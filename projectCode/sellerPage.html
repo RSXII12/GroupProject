@@ -1,0 +1,72 @@
+<!DOCTYPE html?>
+<html lang="en"></html>
+<!-- TODO: PHP linking, JS to verify inputs, PHP linking , format main div to better resemble wireframe-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add listing</title>
+    <link rel="stylesheet" href="sellerPage.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left"><a href="index.html"><img src="iBay-logo.png"></a></div>
+        <div class="header-center">Create a new listing </div>
+        <div class="header-right"></div>
+    </div>
+
+    <div class="form-container">
+        <form method="post" action="sellerPage.php">
+            <div class="form-group">
+                <label for="listing-name">Listing Name</label>
+                <input type="text" id="listing-name" name="listing-name">
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" name="department">
+                    <option>Combo-dept</option>
+                    <option>Electronics</option>
+                    <option>Fashion</option>
+                    <option>Home & Living</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Item Description</label>
+                <textarea id="description" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="price">Price</label>
+                    <input type="text" id="price" name="price">
+                </div>
+    
+                <div class="form-group">
+                    <label for="postage-fee">Postage Fee</label>
+                    <input type="text" id="postage-fee" name="postage-fee">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="deadline">Listing Deadline</label>
+                <input type="date" id="deadline" name="deadline">
+            </div>
+
+            <div class="form-group">
+                <label>Photos (Max 2)</label>
+                <div class="photo-upload">
+                    <span>Click to upload</span>
+                    <input type="file" id="photo-input" accept="image/*" multiple>
+                </div>
+                <div class="photo-preview" id="photo-preview"></div>
+            </div>
+
+            <button type="submit" class="button">Create Listing</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        Copyright @2025-25 iBay Inc. All rights reserved
+    </div>
+</body>

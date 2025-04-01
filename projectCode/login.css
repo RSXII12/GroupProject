@@ -63,13 +63,7 @@ img{
     height: 100%;
     object-fit: cover;
 }
-.nav-container {
-    width: 100%;
-    background-color: #007bff;
-    padding: 15px 0;
-    display: flex;
-    justify-content: center;
-}
+
 label {
     display: block;
     font-weight: bold;

@@ -1,6 +1,6 @@
 <!DOCTYPE html?>
 <html lang="en"></html>
-<!-- TODO: PHP linking, JS to verify inputs, PHP linking , format main div to better resemble wireframe-->
+<!-- TODO: PHP linking, JS to verify inputs and create drag and drop functionality for image upload, format main div to better resemble wireframe-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +16,7 @@
 
     <div class="form-container">
         <form method="post" action="sellerPage.php">
+            <div class="row">
             <div class="form-group">
                 <label for="listing-name">Listing Name</label>
                 <input type="text" id="listing-name" name="listing-name">
@@ -29,6 +30,7 @@
                     <option>Fashion</option>
                     <option>Home & Living</option>
                 </select>
+            </div>
             </div>
 
             <div class="form-group">
@@ -48,6 +50,7 @@
                 </div>
             </div>
 
+            <div class="row">
             <div class="form-group">
                 <label for="deadline">Listing Deadline</label>
                 <input type="date" id="deadline" name="deadline">
@@ -56,12 +59,11 @@
             <div class="form-group">
                 <label>Photos (Max 2)</label>
                 <div class="photo-upload">
-                    <span>Click to upload</span>
                     <input type="file" id="photo-input" accept="image/*" multiple>
                 </div>
                 <div class="photo-preview" id="photo-preview"></div>
             </div>
-
+            </div>
             <button type="submit" class="button">Create Listing</button>
         </form>
     </div>

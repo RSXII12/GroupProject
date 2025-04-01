@@ -6,6 +6,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; 
+    min-height: 75vh; 
+    margin: 0;
 }
 
 .header {
@@ -70,6 +73,7 @@ img{
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 8px;
+
 }
 
 .form-group {
@@ -90,7 +94,7 @@ input, select, textarea {
     justify-content: space-between;
 }
 .row input {
-    width: 48%;
+    width: auto;
 }
 
 .button {

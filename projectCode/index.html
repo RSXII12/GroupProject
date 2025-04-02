@@ -26,12 +26,23 @@
         <!-- Left Side Text/Description -->
     </div>
 
-    <div class="category-buttons">
-        <button onclick="redirectToCategory('Technology')">Technology</button>
-        <button onclick="redirectToCategory('Clothing')">Clothing</button>
-        <button onclick="redirectToCategory('Home & Garden')">Home & Garden</button>
-        <button onclick="redirectToCategory('Toys')">Toys</button>
-        <button onclick="redirectToCategory('Sports')">Sports</button>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
+    <div id="category-sidebar" class="sidebar">
+        <a href="#" onclick="redirectToCategory('Technology')">Technology</a>
+        <a href="#" onclick="redirectToCategory('Clothing')">Clothing</a>
+        <a href="#" onclick="redirectToCategory('Home & Garden')">Home & Garden</a>
+        <a href="#" onclick="redirectToCategory('Toys')">Toys</a>
+        <a href="#" onclick="redirectToCategory('Sports')">Sports</a>
     </div>
+
+    <script>
+        function toggleSidebar() {
+            let sidebar = document.getElementById("category-sidebar");
+            sidebar.classList.toggle("open-sidebar");
+        }
+    </script>
+    
+
+
 </body>
 </html>

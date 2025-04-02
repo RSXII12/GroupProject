@@ -5,6 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Home Page</title>
         <link rel ="stylesheet" href ="style.css">
+        <script>
+            function redirectToCategory(category) {
+                window.location.href = "buyerPage.html?category=" + encodeURIComponent(category);
+            }
+        </script>
 </head>
 <body>
     <h2><u>IBAY</u></h2>
@@ -15,10 +20,16 @@
         </div>
     </div>
 
-
     <div class="description-image-container">
         <!-- Left Side Text/Description -->
     </div>
 
+    <div class="category-buttons">
+        <button onclick="redirectToCategory('Technology')">Technology</button>
+        <button onclick="redirectToCategory('Clothing')">Clothing</button>
+        <button onclick="redirectToCategory('Home & Garden')">Home & Garden</button>
+        <button onclick="redirectToCategory('Toys')">Toys</button>
+        <button onclick="redirectToCategory('Sports')">Sports</button>
+    </div>
 </body>
 </html>

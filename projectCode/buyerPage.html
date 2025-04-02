@@ -2,83 +2,97 @@
 <html lang="en">
     <!--TODO: vanish sign up/login when user logs in (javascript,html), create working seach function(javascript,ajax), make button to apply filters work (javascript), 
     align logo properly (javascript,css), create button to use search function(html,css) fix scroll bar (currently in wrong container and wrong direction)(html, css)-->
-<head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iBay Home</title>
-    <link rel="stylesheet" href="buyerPage.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script>
-        $(function() {
-            $("#price-slider").slider({
-                range: true,
-                min: 0,
-                max: 500,
-                values: [50, 300], // Default min & max values
-                slide: function(event, ui) {
-                    $("#price-range").val("$" + ui.values[0] + " - $" + ui.values[1]);
-                    $("#price-range-label").text("$" + ui.values[0] + " - $" + ui.values[1]);
-                }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>iBay Home</title>
+        <link rel="stylesheet" href="buyerPage.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script>
+            $(function() {
+                $("#price-slider").slider({
+                    range: true,
+                    min: 0,
+                    max: 500,
+                    values: [50, 300],
+                    slide: function(event, ui) {
+                        $("#price-range").val("$" + ui.values[0] + " - $" + ui.values[1]);
+                        $("#price-range-label").text("$" + ui.values[0] + " - $" + ui.values[1]);
+                    }
+                });
+    
+                $("#price-range").val("$" + $("#price-slider").slider("values", 0) +
+                    " - $" + $("#price-slider").slider("values", 1));
+                $("#price-range-label").text("$" + $("#price-slider").slider("values", 0) +
+                    " - $" + $("#price-slider").slider("values", 1));
             });
+    
+            function performSearch() {
+                var searchText = document.getElementById("search-field").value;
+                alert("Search query: " + searchText); // Replace with call to fetch results
+            }
 
-            // Initialize display
-            $("#price-range").val("$" + $("#price-slider").slider("values", 0) +
-                " - $" + $("#price-slider").slider("values", 1));
-            $("#price-range-label").text("$" + $("#price-slider").slider("values", 0) +
-                " - $" + $("#price-slider").slider("values", 1));
-        });
-    </script>
-
-</head>
-<body>
-
-    <!-- HEADER -->
-    <div class="header">
-        <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
-        <a href="sellerPage.html" class="create-listing">Create a listing</a>
-    </div>
-
-    <div class="container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="logo"><a href="buyerPage.html"><img src="iBay-logo.png"></a></div>
-            
-            <div class="search-options">
-                <h3>Advanced Search</h3>
-        
-                <!-- Price Range -->
-                <label for="price-range">Price Range:</label>
-                <input type="text" id="price-range" readonly style="border:0;">
-                <div id="price-slider"></div>
+            window.onload = function() {
+                let category = new URLSearchParams(window.location.search).get("category");
+                if (category) {
+                    let searchField = document.querySelector(".search-bar");
+                    if (searchField) {
+                        searchField.value = category;
+                        document.getElementById("search-button").click(); // Trigger search automatically
+                    }
+                }
                 
-
-                <!-- Time Remaining -->
-                <label for="time-remaining">Time Remaining (hours)</label>
-                <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
-        
-                <!-- Location -->
-                <label for="location">Location</label>
-                <input type="text" id="location" placeholder="Enter location">
-        
-                <!-- Apply Filters Button -->
-                <button id="apply-filters">Apply Filters</button>
+                // Hide login/signup if user is logged in (Placeholder, requires backend logic)
+                let isLoggedIn = false; // Replace with actual login check
+                if (isLoggedIn) {
+                    document.querySelector(".header span").style.display = "none";
+                }
+            };
+    
+            document.addEventListener("DOMContentLoaded", function() {
+                document.getElementById("apply-filters").addEventListener("click", function() {
+                    alert("Filters applied! Implement filtering logic here.");
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="header">
+            <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
+            <a href="sellerPage.html" class="create-listing">Create a listing</a>
+        </div>
+    
+        <div class="container">
+            <div class="sidebar">
+                <div class="logo" style="text-align: center; margin-bottom: 20px;">
+                    <a href="index.html"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
+                </div>
+                
+                <div class="search-options">
+                    <h3>Advanced Search</h3>
+                    <label for="price-range">Price Range:</label>
+                    <input type="text" id="price-range" readonly style="border:0;">
+                    <div id="price-slider"></div>
+                    <label for="time-remaining">Time Remaining (hours)</label>
+                    <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" placeholder="Enter location">
+                    <button id="apply-filters">Apply Filters</button>
+                </div>
+            </div>
+    
+            <div class="main-content">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="search-field" class="search-bar" placeholder="Search field">
+                    <button id="search-button" onclick="performSearch()">Search</button>
+                </div>
             </div>
         </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-            <input type="text" class="search-bar" placeholder="Search field">
-            
+    
+        <div class="footer" style="margin-top: 20px; text-align: center; padding: 10px; background: #f1f1f1;">
+            Copyright @2025-25 iBay Inc. All rights reserved
         </div>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="footer">
-        Copyright @2025-25 iBay Inc. All rights reserved
-    </div>
-
-</body>
+    </body>
 </html>

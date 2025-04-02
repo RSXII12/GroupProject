@@ -183,3 +183,65 @@ input:focus {
     outline: none;
     box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
 }
+
+
+
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: fixed;
+    left: 0;  
+    top: 0px; 
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;  
+    cursor: pointer;
+    border-radius: 5px;
+    z-index: 1100;
+    transition: background 0.3s;
+    font-size: 18px; 
+    width: 249.5px;  
+    height: auto;  
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar-toggle:hover {
+    background: #004494;
+}
+
+/* Sidebar for Categories */
+.sidebar {
+    position: fixed;
+    left: -250px;  /* Initially hidden off-screen */
+    top: 10px;
+    width: 250px;
+    height: 100%;
+    background: #0056b3;
+    padding-top: 20px;
+    transition: left 0.3s;
+    box-shadow: 4px 0px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.sidebar.open-sidebar {
+    left: 0;  /* When the sidebar is open, it slides into view */
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    padding: 15px;
+    text-decoration: none;
+    font-size: 18px;
+    transition: background 0.3s;
+}
+
+.sidebar a:hover {
+    background: #004494;
+}
+
+

@@ -1,7 +1,9 @@
-/* Basic styles */
+/* Fancy & Modern Styles for Home Page */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(180deg, #e3f2fd, #bbdefb);
     margin: 0;
     padding: 0;
     display: flex;
@@ -11,63 +13,75 @@ body {
 
 .header {
     width: 100%;
-    background-color: #0056b3;
-    padding: 20px 0;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    padding: 30px 0;
     text-align: center;
     color: white;
-    font-size: 24px;
+    font-size: 30px;
     font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
 }
 
 .nav-container {
     width: 100%;
-    background-color: #007bff;
+    background: #007bff;
     padding: 15px 0;
     display: flex;
     justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .w3-bar {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent;
     width: 60%;
+    gap: 25px;
 }
 
 .w3-bar a {
     color: white;
     text-decoration: none;
-    font-size: 18px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: background 0.3s;
+    font-size: 20px;
+    padding: 14px 26px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.4s;
 }
 
 .w3-bar a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background: white;
+    color: #007bff;
+    transform: scale(1.15);
+    font-weight: bold;
 }
 
 /* Main Layout for Filters and Items */
 .main-container {
     display: flex;
-    width: 100%;
-    margin: 20px;
+    width: 90%;
+    margin: 40px;
+    justify-content: space-between;
 }
 
 .filters-container {
-    width: 20%;
-    height: 320px;
-    background-color: white;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    width: 25%;
+    height: auto;
+    background: white;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    text-align: center;
 }
 
 .search-box input {
     width: 100%;
-    padding: 8px;
-    margin: 10px 0;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
 .filters {
@@ -88,43 +102,50 @@ body {
     width: 70%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    justify-content: space-evenly;
     margin-left: 20px;
 }
 
 .auction-item {
-    background-color: white;
-    padding: 15px;
-    margin: 10px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 250px;
+    background: white;
+    padding: 25px;
+    margin: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 270px;
     text-align: center;
+    transition: transform 0.4s;
+}
+
+.auction-item:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 button {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    padding: 12px;
+    padding: 16px;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     width: 100%;
     cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s;
+    font-size: 18px;
+    transition: all 0.4s;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background: #004494;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
-
 
 .login-container {
     background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    width: 350px;
+    padding: 45px;
+    border-radius: 15px;
+    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+    width: 400px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -138,21 +159,27 @@ form {
 .form-group {
     width: 100%;
     text-align: left;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 input {
-    width: calc(100% - 20px); /* Ensures input doesn't overflow */
-    padding: 10px;
+    width: calc(100% - 20px);
+    padding: 14px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 16px;
     display: block;
+    transition: border 0.3s;
 }
 
+input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}

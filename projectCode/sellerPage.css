@@ -105,7 +105,11 @@ input, select, textarea {
     width: 100%;
     text-align: center;
 }
-
+.photo-preview img {
+    max-width: 100px;
+    margin-right: 10px;
+    border-radius: 8px;
+}
 .footer {
     background: #2f64ad;
     color: white;

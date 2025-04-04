@@ -1,74 +1,106 @@
-<!DOCTYPE html?>
-<html lang="en"></html>
-<!-- TODO: PHP linking, JS to verify inputs and create drag and drop functionality for image upload, format main div to better resemble wireframe-->
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add listing</title>
-    <link rel="stylesheet" href="sellerPage.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Listing</title>
+    <link rel="stylesheet" href="sellerPage.css" />
+    <style>
+        .photo-preview img {
+            max-width: 100px;
+            margin-right: 10px;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-left"><a href="index.html"><img src="iBay-logo.png"></a></div>
-        <div class="header-center">Create a new listing </div>
+        <div class="header-left"><a href="index.html"><img src="iBay-logo.png" alt="iBay Logo"></a></div>
+        <div class="header-center">Create a new listing</div>
         <div class="header-right"></div>
     </div>
 
     <div class="form-container">
-        <form method="post" action="sellerPage.php">
+        <form method="post" action="sellerPage.php" enctype="multipart/form-data" id="listing-form">
             <div class="row">
-            <div class="form-group">
-                <label for="listing-name">Listing Name</label>
-                <input type="text" id="listing-name" name="listing-name">
-            </div>
+                <div class="form-group">
+                    <label for="listing-name">Listing Name</label>
+                    <input type="text" id="listing-name" name="listing-name" required />
+                </div>
 
-            <div class="form-group">
-                <label for="department">Department</label>
-                <select id="department" name="department">
-                    <option>Combo-dept</option>
-                    <option>Electronics</option>
-                    <option>Fashion</option>
-                    <option>Home & Living</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select a department</option>
+                        <option>Combo-dept</option>
+                        <option>Electronics</option>
+                        <option>Fashion</option>
+                        <option>Home & Living</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="description">Item Description</label>
-                <textarea id="description" name="description" rows="4"></textarea>
+                <textarea id="description" name="description" rows="4" required></textarea>
             </div>
 
             <div class="row">
                 <div class="form-group">
-                    <label for="price">Price</label>
-                    <input type="text" id="price" name="price">
+                    <label for="price">Price (£)</label>
+                    <input type="number" id="price" name="price" step="0.01" required />
                 </div>
-    
+
                 <div class="form-group">
-                    <label for="postage-fee">Postage Fee</label>
-                    <input type="text" id="postage-fee" name="postage-fee">
+                    <label for="postage-fee">Postage Fee (£)</label>
+                    <input type="number" id="postage-fee" name="postage-fee" step="0.01" required />
                 </div>
             </div>
 
             <div class="row">
-            <div class="form-group">
-                <label for="deadline">Listing Deadline</label>
-                <input type="date" id="deadline" name="deadline">
+                <div class="form-group">
+                    <label for="deadline">Listing Deadline</label>
+                    <input type="datetime-local" id="deadline" name="deadline" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Photos (Max 2)</label>
+                    <input type="file" id="photo-input" name="photo-input[]" accept="image/*" multiple required />
+                    <div class="photo-preview" id="photo-preview"></div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Photos (Max 2)</label>
-                <div class="photo-upload">
-                    <input type="file" id="photo-input" accept="image/*" multiple>
-                </div>
-                <div class="photo-preview" id="photo-preview"></div>
-            </div>
-            </div>
             <button type="submit" class="button">Create Listing</button>
         </form>
     </div>
 
     <div class="footer">
-        Copyright @2025-25 iBay Inc. All rights reserved
+        © 2025-25 iBay Inc. All rights reserved
     </div>
+
+    <script>
+        // Limit photo uploads to 2 and preview
+        const photoInput = document.getElementById("photo-input");
+        const photoPreview = document.getElementById("photo-preview");
+
+        photoInput.addEventListener("change", function () {
+            photoPreview.innerHTML = ""; // Clear preview
+            if (photoInput.files.length > 2) {
+                alert("You can only upload a maximum of 2 photos.");
+                photoInput.value = ""; // Reset file input
+                return;
+            }
+
+            Array.from(photoInput.files).forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    photoPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
 </body>
+</html>

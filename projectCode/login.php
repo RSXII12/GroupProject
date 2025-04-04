@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['username'] = $inputUsername;
             
             // Redirect to seller page
-            header("Location: sellerPage.php");
+            header("Location: sellerPage.html");
             exit();
         } else {
             $temp = password_hash($inputPassword, PASSWORD_DEFAULT);

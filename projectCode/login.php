@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Verify the hashed password
         if (password_verify($inputPassword, $hashedPassword)) {
             // Set session variables
-            $_SESSION['user_id'] = $userId;
+            $_SESSION['userId'] = $userId;
             $_SESSION['username'] = $inputUsername;
             
             // Redirect to seller page

@@ -2,9 +2,9 @@
 session_start();
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['userId'])) {
     // Redirect to login if not logged in
-    header("Location: login.html");
+    header("Location: sellerLogin.html");
     exit();
 }
 
@@ -51,6 +51,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Close the statement
     $stmt->close();
+
+    if (!empty($listingPhotos['name'][0])) {
+        for ($i = 0; $i < count($listingPhotos['name']); $i++) {
+            $tmpName = $listingPhotos['tmp_name'][$i];
+            $fileName = $listingPhotos['name'][$i];
+            $fileType = $listingPhotos['type'][$i];
+            $fileSize = $listingPhotos['size'][$i];
+            $fileError = $listingPhotos['error'][$i];
+
+            if ($fileError === UPLOAD_ERR_OK && is_uploaded_file($tmpName)) {
+                $imageData = file_get_contents($tmpName);
+                $imageId = hash("sha256", $fileName);
+                $number = $i+1;
+
+                // Insert into iBayImages
+                $imgStmt = $conn->prepare("INSERT INTO iBayImages (imageId, image, itemType, imageSize, itemId,number) VALUES (?, ?, ?, ?, ?, ?)");
+                $imgStmt->bind_param("sssdss", $imageId, $imageData, $fileType, $fileSize, $listingId,$number);
+                $imgStmt->send_long_data(1, $imageData); // send image blob
+                $imgStmt->execute();
+                $imgStmt->close();
+            }
+        }
+    }
 }
 
     

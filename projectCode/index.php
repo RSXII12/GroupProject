@@ -1,20 +1,30 @@
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+?>
+
 <!DOCTYPE html>
-<html lang = "en">
+<html lang="en">
+
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Home Page</title>
-        <link rel ="stylesheet" href ="style.css">
-        <script>
-            function redirectToCategory(category) {
-                window.location.href = "buyerPage.html?category=" + encodeURIComponent(category);
-            }
-        </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function redirectToCategory(category) {
+            window.location.href = "buyerPage.html?category=" + encodeURIComponent(category);
+        }
+    </script>
 </head>
+
 <body>
-    <h2><div class="logo" style="text-align: center; margin-bottom: 20px;">
-        <a href="index.html"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
-    </div></h2>
+    <h2>
+        <div class="logo" style="text-align: center; margin-bottom: 20px;">
+            <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
+        </div>
+    </h2>
+
     <div class="nav-container">
         <div class="w3-bar">
             <a href="buyerPage.html" class="w3-bar-item w3-button">Browse</a>
@@ -23,7 +33,9 @@
     </div>
 
     <div class="description-image-container">
-        <!-- Left Side Text/Description -->
+        <div id="items-container">
+            <?php include 'fetchItems.php'; ?>  <!-- Corrected PHP  -->
+        </div>
     </div>
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
@@ -41,8 +53,6 @@
             sidebar.classList.toggle("open-sidebar");
         }
     </script>
-    
-
-
 </body>
+
 </html>

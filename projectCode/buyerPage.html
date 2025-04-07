@@ -30,32 +30,76 @@
             });
     
             function performSearch() {
-                var searchText = document.getElementById("search-field").value;
-                alert("Search query: " + searchText); // Replace with call to fetch results
-            }
+                console.log("Search button clicked!");
 
-            window.onload = function() {
-                let category = new URLSearchParams(window.location.search).get("category");
-                if (category) {
-                    let searchField = document.querySelector(".search-bar");
-                    if (searchField) {
-                        searchField.value = category;
-                        document.getElementById("search-button").click(); // Trigger search automatically
-                    }
+                const searchText = $('#search-field').val();
+                const [minPrice, maxPrice] = $("#price-slider").slider("values");
+                const timeRemaining = $('#time-remaining').val();
+                const location = $('#location').val();
+
+                // Create an object for our parameters
+                const params = {};
+                
+                // Only add parameters that are actually set by the user
+                if (searchText) params.searchText = searchText;
+                
+                // Only apply price filter if it's not at default values
+                const defaultMinPrice = 0;
+                const defaultMaxPrice = 500;
+                if (minPrice !== defaultMinPrice || maxPrice !== defaultMaxPrice) {
+                    params.minPrice = minPrice;
+                    params.maxPrice = maxPrice;
                 }
                 
-                // Hide login/signup if user is logged in (Placeholder, requires backend logic)
-                let isLoggedIn = false; // Replace with actual login check
-                if (isLoggedIn) {
-                    document.querySelector(".header span").style.display = "none";
-                }
-            };
-    
-            document.addEventListener("DOMContentLoaded", function() {
-                document.getElementById("apply-filters").addEventListener("click", function() {
-                    alert("Filters applied! Implement filtering logic here.");
+                if (timeRemaining) params.timeRemaining = timeRemaining;
+                if (location) params.location = location;
+
+                $.ajax({
+                    url: 'search.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: params,
+                    success: function(items) {
+                        console.log("Results:", items);
+                        displayResults(items);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", error);
+                        console.log(xhr.responseText);
+                    }
                 });
-            });
+}
+
+function displayResults(items) {
+    const container = document.querySelector(".main-content");
+    let html = "<div><h3>Search Results:</h3>";
+
+    if (!items.length) {
+        html += "<p>No matching items found.</p>";
+    } else {
+        items.forEach(item => {
+            html += `
+                <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+                    <h4>${item.title}</h4>
+                    <img src="${item.image}" style="width:150px; height:auto;"><br>
+                    <p>${item.description}</p>
+                    <p><strong>Price:</strong> $${item.price} (+ $${item.postage} postage)</p>
+                    <p><strong>Time remaining:</strong> ${item.time_remaining} hours</p>
+                </div>
+            `;
+        });
+    }
+
+    html += "</div>";
+    container.innerHTML = html;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Wire both buttons to performSearch
+    document.getElementById("search-button").addEventListener("click", performSearch);
+    document.getElementById("apply-filters").addEventListener("click", performSearch);
+});
+
         </script>
     </head>
     <body>
@@ -88,6 +132,7 @@
                     <input type="text" id="search-field" class="search-bar" placeholder="Search field">
                     <button id="search-button" onclick="performSearch()">Search</button>
                 </div>
+                
             </div>
         </div>
     

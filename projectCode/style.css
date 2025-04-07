@@ -244,15 +244,4 @@ input:focus {
     background: #004494;
 }
 
-#items-container {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 20px; /* Adjust gap between items as needed */
-}
 
-.item-container {
-    border: 1px solid #ffffffcc;
-    padding: 10px;
-    background: #f9f9f9;
-    /* You can add more styling here */
-}

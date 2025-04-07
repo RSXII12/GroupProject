@@ -66,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($fileError === UPLOAD_ERR_OK && is_uploaded_file($tmpName)) {
                 $imageData = file_get_contents($tmpName);
-                $imageId = hash("sha256", $fileName);
+                $imageId = hash("sha256", $fileName . $userId);
                 $number = $i+1;
 
                 // Insert into iBayImages

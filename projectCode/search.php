@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
@@ -15,13 +15,12 @@ if ($conn->connect_error) {
     exit;
 }
 
-// Initialize query components
 $whereConditions = [];
 $params = [];
 $types = "";
 $currentTimestamp = time();
 
-// Check if search text is provided
+// Filters
 if (isset($_GET['searchText']) && $_GET['searchText'] !== '') {
     $searchWildcard = "%" . $_GET['searchText'] . "%";
     $whereConditions[] = "(i.title LIKE ? OR i.description LIKE ?)";
@@ -30,7 +29,6 @@ if (isset($_GET['searchText']) && $_GET['searchText'] !== '') {
     $types .= "ss";
 }
 
-// Check if price range is provided
 if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
     $minPrice = floatval($_GET['minPrice']);
     $maxPrice = floatval($_GET['maxPrice']);
@@ -40,7 +38,6 @@ if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
     $types .= "dd";
 }
 
-// Check if time remaining is provided
 if (isset($_GET['timeRemaining']) && $_GET['timeRemaining'] !== '') {
     $timeRemainingHours = intval($_GET['timeRemaining']);
     $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600);
@@ -49,31 +46,37 @@ if (isset($_GET['timeRemaining']) && $_GET['timeRemaining'] !== '') {
     $types .= "i";
 }
 
-// Build the SQL query
+// Subquery to get the first image per item
 $sql = "
     SELECT 
         i.itemId, i.title, i.category, i.description, i.price, i.postage, i.start, i.finish,
-        img.image
+        img.image_data
     FROM iBayItems i
-    LEFT JOIN iBayImages img ON i.itemId = img.itemId AND img.number = 1
+    LEFT JOIN (
+        SELECT img1.itemId, img1.image AS image_data
+        FROM iBayImages img1
+        INNER JOIN (
+            SELECT itemId, MIN(number) AS min_number
+            FROM iBayImages
+            GROUP BY itemId
+        ) img2 ON img1.itemId = img2.itemId AND img1.number = img2.min_number
+    ) img ON i.itemId = img.itemId
 ";
 
-// Add WHERE clause if there are conditions
+// Conditions
 if (!empty($whereConditions)) {
     $sql .= " WHERE " . implode(" AND ", $whereConditions);
 }
 
 $sql .= " ORDER BY i.finish ASC";
 
-// Prepare and execute the statement
+// Prepare and execute
 $stmt = $conn->prepare($sql);
-
 if (!$stmt) {
     echo json_encode(["error" => "Prepare failed: " . $conn->error]);
     exit;
 }
 
-// Only bind parameters if there are any
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
 }
@@ -82,16 +85,22 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $items = [];
+
 while ($row = $result->fetch_assoc()) {
-    $row['time_remaining'] = round(($row['finish'] - $currentTimestamp) / 3600);
-
-    // Convert image blob to base64 (if you're storing actual image binary)
-    if (!empty($row['image'])) {
-        $row['image'] = 'data:image/jpeg;base64,' . base64_encode($row['image']);
+    if (!empty($row['image_data'])) {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($row['image_data']) ?: 'image/jpeg';
+        $row['image'] = 'data:' . $mimeType . ';base64,' . base64_encode($row['image_data']);
     } else {
-        $row['image'] = 'placeholder.jpg'; // Or a fallback
+        $row['image'] = 'placeholder.jpg';
     }
-
+    
+    unset($row['image_data']);
+    
+    // Convert finish datetime to Unix timestamp
+    $finishTimestamp = strtotime($row['finish']);
+    $row['time_remaining'] = round(($finishTimestamp - $currentTimestamp) / 3600);
+    
     $items[] = $row;
 }
 

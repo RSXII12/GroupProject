@@ -40,17 +40,40 @@ if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
 
 if (isset($_GET['timeRemaining']) && $_GET['timeRemaining'] !== '') {
     $timeRemainingHours = intval($_GET['timeRemaining']);
-    $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600);
-    $whereConditions[] = "i.finish <= ?";
+    $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600); // Calculate max finish time in Unix timestamp
+    
+    // Modify the query to ensure that the comparison is done with Unix timestamps
+    $whereConditions[] = "UNIX_TIMESTAMP(i.finish) <= ?";
     $params[] = $maxFinish;
-    $types .= "i";
+    $types .= "i"; // Add integer type for Unix timestamp
+}
+
+// Ensure that only items with a positive or zero time remaining are shown (i.e., future items)
+$whereConditions[] = "UNIX_TIMESTAMP(i.finish) >= ?";
+$params[] = $currentTimestamp;
+$types .= "i"; // Add integer type for current timestamp
+
+// Location filter
+if (isset($_GET['location']) && $_GET['location'] !== '') {
+    $locationWildcard = "%" . $_GET['location'] . "%";
+    $whereConditions[] = "m.postcode LIKE ?";
+    $params[] = $locationWildcard;
+    $types .= "s";
+}
+
+// Department filter
+if (isset($_GET['department']) && $_GET['department'] !== '') {
+    $department = $_GET['department'];
+    $whereConditions[] = "i.category = ?";
+    $params[] = $department;
+    $types .= "s";
 }
 
 // Subquery to get the first image per item
 $sql = "
     SELECT 
         i.itemId, i.title, i.category, i.description, i.price, i.postage, i.start, i.finish,
-        img.image_data
+        img.image_data, m.postcode AS location
     FROM iBayItems i
     LEFT JOIN (
         SELECT img1.itemId, img1.image AS image_data
@@ -61,9 +84,9 @@ $sql = "
             GROUP BY itemId
         ) img2 ON img1.itemId = img2.itemId AND img1.number = img2.min_number
     ) img ON i.itemId = img.itemId
+    LEFT JOIN iBayMembers m ON i.userId = m.userId
 ";
 
-// Conditions
 if (!empty($whereConditions)) {
     $sql .= " WHERE " . implode(" AND ", $whereConditions);
 }
@@ -94,7 +117,7 @@ while ($row = $result->fetch_assoc()) {
     } else {
         $row['image'] = 'placeholder.jpg';
     }
-    
+
     unset($row['image_data']);
     
     // Convert finish datetime to Unix timestamp

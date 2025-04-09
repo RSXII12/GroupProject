@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-    <!--TODO: vanish sign up/login when user logs in (javascript,html), create working seach function(javascript,ajax), make button to apply filters work (javascript), 
-    align logo properly (javascript,css), create button to use search function(html,css) fix scroll bar (currently in wrong container and wrong direction)(html, css)-->
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,13 +20,13 @@
                         $("#price-range-label").text("$" + ui.values[0] + " - $" + ui.values[1]);
                     }
                 });
-    
+        
                 $("#price-range").val("$" + $("#price-slider").slider("values", 0) +
                     " - $" + $("#price-slider").slider("values", 1));
                 $("#price-range-label").text("$" + $("#price-slider").slider("values", 0) +
                     " - $" + $("#price-slider").slider("values", 1));
             });
-    
+        
             function performSearch() {
                 console.log("Search button clicked!");
 
@@ -36,6 +34,7 @@
                 const [minPrice, maxPrice] = $("#price-slider").slider("values");
                 const timeRemaining = $('#time-remaining').val();
                 const location = $('#location').val();
+                const department = $('#department').val();  // Get selected department
 
                 // Create an object for our parameters
                 const params = {};
@@ -53,53 +52,74 @@
                 
                 if (timeRemaining) params.timeRemaining = timeRemaining;
                 if (location) params.location = location;
+                if (department) params.department = department;  // Add department to params
 
                 $.ajax({
-                    url: 'search.php',
+                    url: 'search.php',  // Update this to your correct PHP file if needed
                     type: 'GET',
                     dataType: 'json',
-                    data: params,
+                    data: params,  // Send all the parameters in the AJAX request
                     success: function(items) {
                         console.log("Results:", items);
-                        displayResults(items);
+                        displayResults(items);  // Call function to display the results
                     },
                     error: function(xhr, status, error) {
                         console.error("AJAX Error:", error);
                         console.log(xhr.responseText);
                     }
                 });
-}
+            }
+        
+            function displayResults(items) {
+                const container = document.querySelector(".main-content");
+                
+                // Check if there is already a results container and remove it
+                let existingResults = container.querySelector(".search-results");
+                if (existingResults) {
+                    existingResults.remove();  // Remove the old results if present
+                }
 
-function displayResults(items) {
-    const container = document.querySelector(".main-content");
-    let html = "<div><h3>Search Results:</h3>";
+                // Create a new div to hold the results
+                const resultsDiv = document.createElement("div");
+                resultsDiv.classList.add("search-results");
+                
+                let html = "";
 
-    if (!items.length) {
-        html += "<p>No matching items found.</p>";
-    } else {
-        items.forEach(item => {
-            html += `
-                <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-                    <h4>${item.title}</h4>
-                    <img src="${item.image}" style="width:150px; height:auto;"><br>
-                    <p>${item.description}</p>
-                    <p><strong>Price:</strong> $${item.price} (+ $${item.postage} postage)</p>
-                    <p><strong>Time remaining:</strong> ${item.time_remaining} hours</p>
-                </div>
-            `;
-        });
-    }
+                if (!items.length) {
+                    html += "<p>No matching items found.</p>";
+                } else {
+                    items.forEach(item => {
+                        html += `
+                            <div class="result-card">
+                                <div class="image-container">
+                                    <img src="${item.image}" alt="${item.title}">
+                                </div>
+                                <div class="content">
+                                    <h4>${item.title}</h4>
+                                    <p class="category"><strong>Department:</strong> ${item.category}</p>
+                                    <p class="time-remaining"><strong>Time remaining:</strong> ${item.time_remaining} hours</p>
+                                    <p class="price"><strong>Price:</strong> $${item.price} (+ $${item.postage} postage)</p>
+                                    <p class="location"><strong>Location:</strong> ${item.location}</p>
+                                </div>
+                                <div class="description">
+                                    <p>${item.description}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
 
-    html += "</div>";
-    container.innerHTML = html;
-}
+                resultsDiv.innerHTML = html;
 
-document.addEventListener("DOMContentLoaded", function() {
-    // Wire both buttons to performSearch
-    document.getElementById("search-button").addEventListener("click", performSearch);
-    document.getElementById("apply-filters").addEventListener("click", performSearch);
-});
-
+                // Append the new results below the search bar
+                container.appendChild(resultsDiv);
+            }
+        
+            document.addEventListener("DOMContentLoaded", function() {
+                // Wire both buttons to performSearch
+                document.getElementById("search-button").addEventListener("click", performSearch);
+                document.getElementById("apply-filters").addEventListener("click", performSearch);
+            });
         </script>
     </head>
     <body>
@@ -116,6 +136,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 <div class="search-options">
                     <h3>Advanced Search</h3>
+                    <label for="department">Department</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select a department</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Home & Garden">Home & Garden</option>
+                    </select>
                     <label for="price-range">Price Range:</label>
                     <input type="text" id="price-range" readonly style="border:0;">
                     <div id="price-slider"></div>
@@ -130,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <div class="main-content">
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="search-field" class="search-bar" placeholder="Search field">
-                    <button id="search-button" onclick="performSearch()">Search</button>
+                    <button id="search-button">Search</button>
                 </div>
                 
             </div>

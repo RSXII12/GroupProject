@@ -4,7 +4,6 @@ body {
     background-color: #f8f9fa;
     margin: 0;
     padding: 0;
-    
 }
 
 /* HEADER */
@@ -44,10 +43,12 @@ body {
     align-items: center;
     margin-bottom: 10px;
 }
-img{
+
+img {
     width: 60%;
     height: 75%;
 }
+
 .search-options {
     padding: 10px;
     background: #e0e0e0;
@@ -73,30 +74,28 @@ img{
 
 #price-slider {
     position: relative;
-    width: 100%; 
+    width: 100%;
     margin-top: 5px;
 }
 
 .ui-slider-horizontal {
     height: 6px;
-    background: linear-gradient(to right, #007bff, #0056b3); 
+    background: linear-gradient(to right, #007bff, #0056b3);
     border-radius: 3px;
     border: none;
 }
 
-
 .ui-slider-handle {
-    width: 12px !important; 
-    height: 12px !important; 
+    width: 12px !important;
+    height: 12px !important;
     background: white !important;
     border: 2px solid #007bff !important;
-    border-radius: 50% !important; 
+    border-radius: 50% !important;
     cursor: pointer;
-    top: -3px !important; 
+    top: -3px !important;
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.2s ease-in-out, background 0.2s;
 }
-
 
 .ui-slider-handle:hover {
     transform: scale(1.1);
@@ -104,14 +103,107 @@ img{
     border-color: white !important;
 }
 
-
 .ui-slider-handle:active {
     transform: scale(1.15);
     background: #0056b3 !important;
     border-color: white !important;
 }
 
+/* Search Results */
+.search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: flex-start;
+}
 
+.search-results > div {
+    display: flex;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    transition: all 0.3s ease-in-out;
+}
+
+.search-results > div:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Image styling */
+.search-results > div img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 20px;
+}
+
+/* Content container (title, description, etc.) */
+.search-results > div .content {
+    flex-grow: 1;
+}
+
+/* Title styling */
+.search-results > div h4 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 0;
+    color: #333;
+}
+
+/* Description text */
+.search-results > div p {
+    font-size: 14px;
+    color: #666;
+    margin: 5px 0;
+}
+
+/* Price and location text */
+.search-results > div .price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2a9d8f;
+    margin-top: 10px;
+}
+
+.search-results > div .location {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* Department text */
+.search-results > div .category {
+    font-size: 14px;
+    color: #e76f51;
+    margin-top: 5px;
+}
+
+/* Time left text */
+.search-results > div .time-remaining {
+    font-size: 14px;
+    color: #f4a261;
+    margin-top: 5px;
+}
+
+/* Adjusting for responsive design */
+@media (max-width: 768px) {
+    .search-results > div {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .search-results > div img {
+        width: 100%;
+        height: auto;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+
+/* Footer Styling */
 .footer {
     background: #2f64ad;
     color: white;

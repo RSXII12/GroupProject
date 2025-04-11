@@ -16,15 +16,15 @@
                     max: 500,
                     values: [0, 500],
                     slide: function(event, ui) {
-                        $("#price-range").val("$" + ui.values[0] + " - $" + ui.values[1]);
-                        $("#price-range-label").text("$" + ui.values[0] + " - $" + ui.values[1]);
+                        $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
+                        $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
                     }
                 });
         
-                $("#price-range").val("$" + $("#price-slider").slider("values", 0) +
-                    " - $" + $("#price-slider").slider("values", 1));
-                $("#price-range-label").text("$" + $("#price-slider").slider("values", 0) +
-                    " - $" + $("#price-slider").slider("values", 1));
+                $("#price-range").val("£" + $("#price-slider").slider("values", 0) +
+                    " - £" + $("#price-slider").slider("values", 1));
+                $("#price-range-label").text("£" + $("#price-slider").slider("values", 0) +
+                    " - £" + $("#price-slider").slider("values", 1));
             });
         
             function performSearch() {

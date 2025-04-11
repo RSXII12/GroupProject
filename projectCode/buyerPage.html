@@ -126,7 +126,22 @@
                 container.appendChild(resultsDiv);
             }
         
-            document.addEventListener("DOMContentLoaded", function() {
+            document.addEventListener("DOMContentLoaded", function() 
+            {
+                // Check for category in URL and auto-set the filter
+                const urlParams = new URLSearchParams(window.location.search);
+                const category = urlParams.get("category");
+
+                if (category) 
+                {
+                    const departmentSelect = document.getElementById("department");
+                    departmentSelect.value = category;
+                }
+
+                 // Wait a tiny bit to ensure UI like the price slider is ready, then trigger search
+                    setTimeout(() => {
+                        performSearch();
+                    }, 100);
                 // Wire both buttons to performSearch
                 document.getElementById("search-button").addEventListener("click", performSearch);
                 document.getElementById("apply-filters").addEventListener("click", performSearch);
@@ -151,7 +166,7 @@
                     <select id="department" name="department" required>
                         <option value="">Select a department</option>
                         <option value="Technology">Technology</option>
-                        <option value="Fashion">Fashion</option>
+                        <option value="Clothing">Clothing</option>
                         <option value="Home & Garden">Home & Garden</option>
                     </select>
                     <label for="price-range">Price Range:</label>

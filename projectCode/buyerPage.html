@@ -69,6 +69,17 @@
                     }
                 });
             }
+
+            function formatTime(seconds) {
+                const days = Math.floor(seconds / (3600 * 24));
+                seconds %= 3600 * 24;
+                const hours = Math.floor(seconds / 3600);
+                seconds %= 3600;
+                const minutes = Math.floor(seconds / 60);
+                seconds = Math.floor(seconds % 60);
+
+                return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
         
             function displayResults(items) {
                 const container = document.querySelector(".main-content");
@@ -97,7 +108,7 @@
                                 <div class="content">
                                     <h4>${item.title}</h4>
                                     <p class="category"><strong>Department:</strong> ${item.category}</p>
-                                    <p class="time-remaining"><strong>Time remaining:</strong> ${item.time_remaining} hours</p>
+                                    <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
                                     <p class="price"><strong>Price:</strong> $${item.price} (+ $${item.postage} postage)</p>
                                     <p class="location"><strong>Location:</strong> ${item.location}</p>
                                 </div>

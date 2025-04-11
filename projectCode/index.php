@@ -40,11 +40,11 @@ error_reporting(E_ALL);
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
     <div id="category-sidebar" class="sidebar">
-        <a href="#" onclick="redirectToCategory('Technology')">Technology</a>
-        <a href="#" onclick="redirectToCategory('Clothing')">Clothing</a>
-        <a href="#" onclick="redirectToCategory('Home & Garden')">Home & Garden</a>
-        <a href="#" onclick="redirectToCategory('Toys')">Toys</a>
-        <a href="#" onclick="redirectToCategory('Sports')">Sports</a>
+        <a href="buyerPage.html?category=Technology">Technology</a>
+        <a href="buyerPage.html?category=Clothing">Clothing</a>
+        <a href="buyerPage.html?category=Home & Garden">Home & Garden</a>
+        <a href="buyerPage.html?category=Toys">Toys</a>
+        <a href="buyerPage.html?category=Sports">Sports</a>
     </div>
 
     <script>

@@ -153,12 +153,6 @@ img {
     color: #333;
 }
 
-/* Description text */
-.search-results > div p {
-    font-size: 14px;
-    color: #666;
-    margin: 5px 0;
-}
 
 /* Price and location text */
 .search-results > div .price {

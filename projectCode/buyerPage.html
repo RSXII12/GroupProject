@@ -55,7 +55,7 @@
                 if (department) params.department = department;  // Add department to params
 
                 $.ajax({
-                    url: 'search.php',  // Update this to your correct PHP file if needed
+                    url: 'search.php',  
                     type: 'GET',
                     dataType: 'json',
                     data: params,  // Send all the parameters in the AJAX request
@@ -111,9 +111,6 @@
                                     <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
                                     <p class="price"><strong>Price:</strong> £${item.price} (+ £${item.postage} postage)</p>
                                     <p class="location"><strong>Location:</strong> ${item.location}</p>
-                                </div>
-                                <div class="description">
-                                    <p>${item.description}</p>
                                 </div>
                             </div>
                         `;

@@ -254,5 +254,44 @@ input:focus {
     border: 1px solid #ffffffcc;
     padding: 10px;
     background: #f9f9f9;
-    /* You can add more styling here */
+    /*can add more styling here */
+}
+
+.item-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.item-container {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+
+.result-card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px 0;
+    display: flex;
+    cursor: pointer;
+}
+
+.result-card:hover {
+    background-color: #f9f9f9;
+}
+
+.result-link {
+    display: block; /* Makes the entire card clickable */
+    text-decoration: none;
+    color: inherit;
 }

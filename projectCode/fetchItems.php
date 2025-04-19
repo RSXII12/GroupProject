@@ -23,21 +23,24 @@ $result = $conn->query($sql);
 if ($result->num_rows > 0) {
     // Loop through all items and display them
     while ($row = $result->fetch_assoc()) {
-        // Display item details
-        echo '<div class="item-container">';
-        echo '<h3>' . htmlspecialchars($row["title"]) . '</h3>';
-        #echo '<p>' . htmlspecialchars($row["category"]) . '</p>';
-        #echo '<p>' . htmlspecialchars($row["description"]) . '</p>';
-        echo '<p>Price: £' . htmlspecialchars($row["price"]) . '</p>';
-        
-        // Display image
-        $imageData = $row['image'];
-        if ($imageData) {
-            $image = base64_encode($imageData); // Convert binary data to base64
-            echo '<img src="data:image/jpeg;base64,' . $image . '" alt="' . htmlspecialchars($row["title"]) . '" style="width: 100px; height: auto;">';
+        $itemId = htmlspecialchars($row["itemId"]);
+        $title = htmlspecialchars($row["title"]);
+        $price = htmlspecialchars($row["price"]);
+        $imageTag = "";
+
+        if ($row['image']) {
+            $imageData = base64_encode($row['image']); // Convert binary data to base64
+            $imageTag = '<img src="data:image/jpeg;base64,' . $imageData . '" alt="' . $title . '" style="width: 100px; height: auto;">';
         }
-        
+
+        // Wrap each item in a clickable link to the item details page
+        echo '<a href="itemDetails.php?id=' . $itemId . '" class="item-link">';
+        echo '<div class="item-container">';
+        echo '<h3>' . $title . '</h3>';
+        echo '<p>Price: £' . $price . '</p>';
+        echo $imageTag;
         echo '</div>';
+        echo '</a>';
     }
 } else {
     echo "No items found.";

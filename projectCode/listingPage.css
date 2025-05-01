@@ -67,3 +67,68 @@ img{
     height: 100%;
     object-fit: cover;
 }
+
+.container {
+    max-width: 1000px;
+    margin: 20px auto;
+}
+
+h2 {
+    margin-top: 40px;
+    color: #333;
+}
+
+.listing-card {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+    background: white;
+}
+
+.listing-card.inactive {
+    background: #f5f5f5;
+    color: #888;
+}
+
+.listing-image img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.listing-info {
+    flex: 1;
+}
+
+.listing-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-button,
+.delete-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.edit-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.delete-button {
+    background-color: #dc3545;
+    color: white;
+}

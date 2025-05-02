@@ -34,15 +34,13 @@ if ($itemId > 0) {
         $imgStmt->execute();
         $imgResult = $imgStmt->get_result();
 
-        echo '<div class="image-carousel">';
-        $first = true;
+        echo '<div class="image-gallery" style="display: flex; gap: 10px; flex-wrap: wrap;">';
         while ($imgRow = $imgResult->fetch_assoc()) {
             $imageData = base64_encode($imgRow['image']);
-            $display = $first ? 'block' : 'none';
-            echo '<img src="data:image/jpeg;base64,' . $imageData . '" style="width:200px; display:' . $display . ';">';
-            $first = false;
+            echo '<img src="data:image/jpeg;base64,' . $imageData . '" style="width:200px; height:auto;">';
         }
         echo '</div>';
+
     } else {
         echo "Item not found.";
     }
@@ -54,21 +52,3 @@ if ($itemId > 0) {
 
 $conn->close();
 ?>
-
-<!-- Simple image switching again -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.image-carousel').forEach(container => {
-        const images = container.querySelectorAll('img');
-        let index = 0;
-        if (images.length < 2) return;
-
-        setInterval(() => {
-            images.forEach((img, i) => {
-                img.style.display = i === index ? 'block' : 'none';
-            });
-            index = (index + 1) % images.length;
-        }, 4000);
-    });
-});
-</script>

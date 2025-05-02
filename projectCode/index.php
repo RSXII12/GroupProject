@@ -41,7 +41,7 @@ error_reporting(E_ALL);
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
     <div id="category-sidebar" class="sidebar">
         <a href="buyerPage.html?category=Technology">Technology</a>
-        <a href="buyerPage.html?category=Clothing">Clothing</a>
+        <a href="buyerPage.html?category=Fashion">Fashion</a>
         <a href="buyerPage.html?category=Home & Garden">Home & Garden</a>
         <a href="buyerPage.html?category=Toys">Toys</a>
         <a href="buyerPage.html?category=Sports">Sports</a>

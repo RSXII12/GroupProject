@@ -1,79 +1,74 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// Connect to database using mysqli
+$servername = "sci-project.lboro.ac.uk";
+$username = "295group6";
+$password = "wHiuTatMrdizq3JfNeAH";
+$dbname = "295group6";
 
-require 'db.php'; // Make sure this connects using PDO
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-if (!isset($_GET['id'])) {
-    echo "No item specified.";
-    exit;
+// Check for errors
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 
-$itemId = intval($_GET['id']);
-$stmt = $pdo->prepare("
-    SELECT i.itemId, i.title, i.description, i.price, i.postage, i.category, i.finish, img.image
-    FROM iBayItems i
-    LEFT JOIN iBayImages img ON i.itemId = img.itemId
-    WHERE i.itemId = ?
-");
-$stmt->execute([$itemId]);
-$item = $stmt->fetch();
+// Get item ID from URL
+$itemId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-if (!$item) {
-    echo "Item not found.";
-    exit;
+if ($itemId > 0) {
+    // Fetch item details
+    $stmt = $conn->prepare("SELECT title, description, price, finish FROM iBayItems WHERE itemId = ?");
+    $stmt->bind_param("i", $itemId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        echo "<h2>" . htmlspecialchars($row['title']) . "</h2>";
+        echo "<p>Description: " . htmlspecialchars($row['description']) . "</p>";
+        echo "<p>Price: £" . htmlspecialchars($row['price']) . "</p>";
+        echo "<p>Auction ends at: " . htmlspecialchars($row['finish']) . "</p>";
+
+        // Fetch images
+        $imgStmt = $conn->prepare("SELECT image FROM iBayImages WHERE itemId = ?");
+        $imgStmt->bind_param("i", $itemId);
+        $imgStmt->execute();
+        $imgResult = $imgStmt->get_result();
+
+        echo '<div class="image-carousel">';
+        $first = true;
+        while ($imgRow = $imgResult->fetch_assoc()) {
+            $imageData = base64_encode($imgRow['image']);
+            $display = $first ? 'block' : 'none';
+            echo '<img src="data:image/jpeg;base64,' . $imageData . '" style="width:200px; display:' . $display . ';">';
+            $first = false;
+        }
+        echo '</div>';
+    } else {
+        echo "Item not found.";
+    }
+
+    $stmt->close();
+} else {
+    echo "Invalid item ID.";
 }
+
+$conn->close();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><?= htmlspecialchars($item['title']) ?> - iBay</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="item-detail-container">
-        <a href="index.php">← Back to Home</a>
-        <h1><?= htmlspecialchars($item['title']) ?></h1>
+<!-- Simple image switching again -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.image-carousel').forEach(container => {
+        const images = container.querySelectorAll('img');
+        let index = 0;
+        if (images.length < 2) return;
 
-        <?php
-        $imageData = $item['image'] ?? null;
-        if ($imageData) {
-            $base64Image = base64_encode($imageData);
-            echo '<img src="data:image/jpeg;base64,' . $base64Image . '" alt="' . htmlspecialchars($item['title']) . '" style="max-width: 300px;">';
-        } else {
-            echo '<img src="placeholder.jpg" alt="No Image Available" style="max-width: 300px;">';
-        }
-        ?>
-    
-        <p><strong>Price:</strong> £<?= htmlspecialchars($item['price'] ?? 'N/A') ?></p>
-        <p><strong>Postage:</strong> £<?= htmlspecialchars($item['postage'] ?? 'N/A') ?></p>
-
-        <p><strong>Description:</strong></p>
-        <p><?= nl2br(htmlspecialchars($item['description'] ?? 'No description provided')) ?></p>
-
-        <?php
-        date_default_timezone_set('Europe/London');
-        $endTime = isset($item['finish']) ? strtotime($item['finish']) : null;
-
-        if ($endTime) {
-            $now = time();
-            $diffSeconds = $endTime - $now;
-
-            if ($diffSeconds > 0) {
-                $daysRemaining = floor($diffSeconds / 86400); // 1 day = 86400 seconds
-                $hoursRemaining = floor(($diffSeconds % 86400) / 3600); // Remaining hours
-                $minutesRemaining = floor(($diffSeconds % 3600) / 60); // Remaining minutes
-
-                echo "<p><strong>Time Remaining:</strong> $daysRemaining days $hoursRemaining hours $minutesRemaining minutes</p>";
-            } else {
-                echo "<p><strong>Time Remaining:</strong> Auction ended</p>";
-            }
-        } else {
-            echo "<p><strong>Time Remaining:</strong> Not available</p>";
-        }
-        ?>
-    </div>
-</body>
-</html>
+        setInterval(() => {
+            images.forEach((img, i) => {
+                img.style.display = i === index ? 'block' : 'none';
+            });
+            index = (index + 1) % images.length;
+        }, 2000);
+    });
+});
+</script>

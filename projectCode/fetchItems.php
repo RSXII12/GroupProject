@@ -13,10 +13,12 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Query to fetch item details and images
+// Query to fetch only non-expired item details and images
 $sql = "SELECT iBayItems.itemId, iBayItems.title, iBayItems.price, iBayImages.image
         FROM iBayItems
-        LEFT JOIN iBayImages ON iBayItems.itemId = iBayImages.itemId";
+        LEFT JOIN iBayImages ON iBayItems.itemId = iBayImages.itemId
+        WHERE iBayItems.finish > NOW()";  // Only fetch items where the auction hasn't ended
+
 $result = $conn->query($sql);
 
 // Check if there are any results

@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.style.display = i === index ? 'block' : 'none';
             });
             index = (index + 1) % images.length;
-        }, 2000);
+        }, 4000);
     });
 });
 </script>

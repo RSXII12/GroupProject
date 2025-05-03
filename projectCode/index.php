@@ -13,7 +13,7 @@ error_reporting(E_ALL);
     <link rel="stylesheet" href="style.css">
     <script>
         function redirectToCategory(category) {
-            window.location.href = "buyerPage.html?category=" + encodeURIComponent(category);
+            window.location.href = "buyerPage.php?category=" + encodeURIComponent(category);
         }
     </script>
 </head>
@@ -27,7 +27,7 @@ error_reporting(E_ALL);
 
     <div class="nav-container">
         <div class="w3-bar">
-            <a href="buyerPage.html" class="w3-bar-item w3-button">Browse</a>
+            <a href="buyerPage.php" class="w3-bar-item w3-button">Browse</a>
             <a href="sellerLogin.html" class="w3-bar-item w3-button">Sell</a>
         </div>
     </div>
@@ -40,11 +40,11 @@ error_reporting(E_ALL);
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
     <div id="category-sidebar" class="sidebar">
-        <a href="buyerPage.html?category=Technology">Technology</a>
-        <a href="buyerPage.html?category=Fashion">Fashion</a>
-        <a href="buyerPage.html?category=Home & Garden">Home & Garden</a>
-        <a href="buyerPage.html?category=Toys">Toys</a>
-        <a href="buyerPage.html?category=Sports">Sports</a>
+        <a href="buyerPage.php?category=Technology">Technology</a>
+        <a href="buyerPage.php?category=Fashion">Fashion</a>
+        <a href="buyerPage.php?category=Home & Garden">Home & Garden</a>
+        <a href="buyerPage.php?category=Toys">Toys</a>
+        <a href="buyerPage.php?category=Sports">Sports</a>
     </div>
 
     <script>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>iBay Home</title>
@@ -8,6 +9,10 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
         <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <?php
+        session_start();
+        $isLoggedIn = isset($_SESSION['userId']); 
+        ?>
         <script>
             $(function() {
                 $("#price-slider").slider({
@@ -61,6 +66,19 @@
                     data: params,  // Send all the parameters in the AJAX request
                     success: function(items) {
                         console.log("Results:", items);
+                        const sortBy = $('#sort-options').val();
+
+                        if (sortBy === "price-asc") {
+                            items.sort((a, b) => a.price - b.price);
+                        } else if (sortBy === "price-desc") {
+                            items.sort((a, b) => b.price - a.price);
+                        } else if (sortBy === "time-asc") {
+                            items.sort((a, b) => a.time_remaining - b.time_remaining);
+                        } else if (sortBy === "bid-desc") {
+                            items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
+                        } else if (sortBy === "bid-asc") {
+                            items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
+                        }
                         displayResults(items);  // Call function to display the results
                     },
                     error: function(xhr, status, error) {
@@ -147,23 +165,36 @@
                 // Wire both buttons to performSearch
                 document.getElementById("search-button").addEventListener("click", performSearch);
                 document.getElementById("apply-filters").addEventListener("click", performSearch);
+                $('#sort-options').on('change', performSearch);
             });
+            
         </script>
     </head>
     <body>
-        <div class="header">
+    <div class="header">
+        <?php if ($isLoggedIn): ?>
+            <span>Welcome! <a href="logout.php">Log out</a></span>
+        <?php else: ?>
             <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
-            <a href="sellerPage.html" class="create-listing">Create a listing</a>
-        </div>
+        <?php endif; ?>
+        <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
+    </div>
     
         <div class="container">
             <div class="sidebar">
                 <div class="logo" style="text-align: center; margin-bottom: 20px;">
                     <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
                 </div>
-                
                 <div class="search-options">
                     <h3>Advanced Search</h3>
+                    <select id="sort-options" class="sort-dropdown">
+                        <option value="">Sort By</option>
+                        <option value="price-asc">Starting Price: Low to High</option>
+                        <option value="price-desc">Starting Price: High to Low</option>
+                        <option value="bid-asc">Current Bid: Low to High</option>
+                        <option value="bid-desc">Current Bid: High to Low</option>
+                        <option value="time-asc">Time Remaining</option>
+                    </select>
                     <label for="department">Department</label>
                     <select id="department" name="department" required>
                         <option value="">Select a department</option>

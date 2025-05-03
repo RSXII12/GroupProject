@@ -38,7 +38,7 @@ if ($result->num_rows > 0) {
         // Get all images for this item
         $imgSql = "SELECT image FROM iBayImages WHERE itemId = ?";
         $imgStmt = $conn->prepare($imgSql);
-        $imgStmt->bind_param("i", $itemId);
+        $imgStmt->bind_param("s", $itemId);
         $imgStmt->execute();
         $imgResult = $imgStmt->get_result();
 

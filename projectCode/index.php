@@ -34,7 +34,7 @@ error_reporting(E_ALL);
 
     <div class="description-image-container">
         <div id="items-container">
-            <?php include 'fetchItems.php'; ?>  <!-- Corrected PHP  -->
+            <?php include 'fetchItems.php'; ?>  
         </div>
     </div>
 

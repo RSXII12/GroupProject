@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $number = $i + 1;
 
                     $imgStmt = $conn->prepare("INSERT INTO iBayImages (imageId, image, itemType, imageSize, itemId, number) VALUES (?, ?, ?, ?, ?, ?)");
-                    $imgStmt->bind_param("sssdss", $imageId, $imageData, $fileType, $fileSize, $listingId, $number);
+                    $imgStmt->bind_param("sssdss", $imageId, $imageData, $listingDepartment, $fileSize, $listingId, $number);
                     $imgStmt->send_long_data(1, $imageData);
                     $imgStmt->execute();
                     $imgStmt->close();
@@ -70,11 +70,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $conn->commit(); // Commit transaction
+        header("Location: buyerPage.php");
 
     } catch (Exception $e) {
         $conn->rollback(); // Rollback all queries on error
         error_log("Transaction failed: " . $e->getMessage());
         echo "An error occurred while processing your listing. Please try again.";
+        header("Location: sellerPage.html");
     }
 }
 

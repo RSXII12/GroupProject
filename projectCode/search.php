@@ -40,20 +40,16 @@ if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
 
 if (isset($_GET['timeRemaining']) && $_GET['timeRemaining'] !== '') {
     $timeRemainingHours = intval($_GET['timeRemaining']);
-    $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600); // Calculate max finish time in Unix timestamp
-    
-    // Modify the query to ensure that the comparison is done with Unix timestamps
+    $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600);
     $whereConditions[] = "UNIX_TIMESTAMP(i.finish) <= ?";
     $params[] = $maxFinish;
-    $types .= "i"; // Add integer type for Unix timestamp
+    $types .= "i";
 }
 
-// Ensure that only items with a positive or zero time remaining are shown (i.e., future items)
 $whereConditions[] = "UNIX_TIMESTAMP(i.finish) >= ?";
 $params[] = $currentTimestamp;
-$types .= "i"; // Add integer type for current timestamp
+$types .= "i";
 
-// Location filter
 if (isset($_GET['location']) && $_GET['location'] !== '') {
     $locationWildcard = "%" . $_GET['location'] . "%";
     $whereConditions[] = "m.postcode LIKE ?";
@@ -61,7 +57,6 @@ if (isset($_GET['location']) && $_GET['location'] !== '') {
     $types .= "s";
 }
 
-// Department filter
 if (isset($_GET['department']) && $_GET['department'] !== '') {
     $department = $_GET['department'];
     $whereConditions[] = "i.category = ?";
@@ -73,6 +68,7 @@ if (isset($_GET['department']) && $_GET['department'] !== '') {
 $sql = "
     SELECT 
         i.itemId, i.title, i.category, i.description, i.price, i.postage, i.start, i.finish,
+        i.currentBid, i.bidUser,
         img.image_data, m.postcode AS location
     FROM iBayItems i
     LEFT JOIN (
@@ -93,7 +89,6 @@ if (!empty($whereConditions)) {
 
 $sql .= " ORDER BY i.finish ASC";
 
-// Prepare and execute
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     echo json_encode(["error" => "Prepare failed: " . $conn->error]);
@@ -119,11 +114,10 @@ while ($row = $result->fetch_assoc()) {
     }
 
     unset($row['image_data']);
-    
-    // Convert finish datetime to Unix timestamp
+
     $finishTimestamp = strtotime($row['finish']);
     $row['time_remaining'] = round(($finishTimestamp - $currentTimestamp) / 3600);
-    
+
     $items[] = $row;
 }
 

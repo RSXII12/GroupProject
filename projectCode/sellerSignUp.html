@@ -1,42 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Seller Sign up</title>
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="login.css"/>
 </head>
 <body>
     <div class="header">
-        <div class="header-left"><a href="index.php"><img src="iBay-logo.png"></a></div>
+        <div class="header-left"><a href="index.php"><img src="iBay-logo.png" alt="iBay Logo"/></a></div>
         <div class="header-center">iBay sign up</div>
         <div class="header-right"></div>
     </div>
     <div class="login-container">
         <h2>Sign up to iBay</h2>
-        <form method="POST" action="signUp.php">
+        <form method="POST" action="signUp.php" id="signupForm">
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
+            <input type="text" id="username" name="username" required />
+            <div class="error" id="usernameError">Username must be at least 4 characters.</div>
 
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" required />
+            <div class="error" id="passwordError">Password must be at least 4 characters.</div>
 
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" id="email" name="email" required />
+            <div class="error" id="emailStatus">Checking email...</div>
 
             <label for="address">Address</label>
-            <input type="text" id="address" name="address" required>
+            <input type="text" id="address" name="address" required />
+            <div class="error" id="addressError">Address must be at least 5 characters.</div>
 
             <label for="postcode">Postcode</label>
-            <input type="text" id="postcode" name="postcode" required>
+            <input type="text" id="postcode" name="postcode" required />
+            <div class="error" id="postcodeError">Postcode must be 5–8 characters, letters and numbers only.</div>
 
-            <button type="submit">Login</button>
-
+            <button type="submit">Sign up</button>
         </form>
     </div>
     <p><a href="sellerLogin.html">Log in</a> instead</p>
     <div class="footer">
         Copyright @2025-25 iBay Inc. All rights reserved
     </div>
+
+    <script>
+        document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+        const form = document.getElementById('signupForm');
+
+        const inputs = {
+            username: {
+                el: document.getElementById('username'),
+                error: document.getElementById('usernameError'),
+                validate: (val) => val.length >= 4,
+            },
+            password: {
+                el: document.getElementById('password'),
+                error: document.getElementById('passwordError'),
+                validate: (val) => val.length >= 4,
+            },
+            address: {
+                el: document.getElementById('address'),
+                error: document.getElementById('addressError'),
+                validate: (val) => val.length >= 5,
+            },
+            postcode: {
+                el: document.getElementById('postcode'),
+                error: document.getElementById('postcodeError'),
+                validate: (val) => /^[A-Z0-9 ]{5,8}$/i.test(val),
+            },
+        };
+
+        Object.values(inputs).forEach(input => {
+            input.el.addEventListener('input', () => {
+                const value = input.el.value.trim();
+                if (input.validate(value)) {
+                    input.el.classList.add('valid');
+                    input.error.style.display = 'none';
+                } else {
+                    input.el.classList.remove('valid');
+                    input.error.style.display = 'block';
+                }
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            let isValid = true;
+            Object.values(inputs).forEach(input => {
+                const value = input.el.value.trim();
+                if (!input.validate(value)) {
+                    input.el.classList.remove('valid');
+                    input.error.style.display = 'block';
+                    isValid = false;
+                }
+            });
+            if (!isValid) e.preventDefault();
+        });
+        const emailInput = document.getElementById('email');
+        const emailStatus = document.getElementById('emailStatus');
+        let emailCheckTimeout;
+
+        emailInput.addEventListener('input', () => {
+        clearTimeout(emailCheckTimeout);
+        const email = emailInput.value.trim();
+
+        // Only show feedback if user has typed something
+        if (email === "") {
+            emailStatus.style.display = 'none';
+            emailInput.classList.remove('valid');
+            emailStatus.textContent = ""; // Clear message
+            return;
+        }
+
+        // Start checking email availability
+        emailStatus.style.display = 'block';
+        emailStatus.style.color = "black";
+        emailStatus.textContent = "Checking email...";
+
+        emailCheckTimeout = setTimeout(() => {
+            fetch(`checkEmail.php?email=${encodeURIComponent(email)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.taken) {
+                        emailStatus.textContent = "Email already in use.";
+                        emailStatus.style.color = "red";
+                        emailInput.classList.remove('valid');
+                    } else {
+                        emailStatus.textContent = "Email is available.";
+                        emailStatus.style.color = "green";
+                        emailInput.classList.add('valid');
+                    }
+                })
+                .catch(err => {
+                    emailStatus.textContent = "Error checking email.";
+                    emailStatus.style.color = "orange";
+                });
+        }, 500); // Debounced
+    });
+    </script>
 </body>
 </html>

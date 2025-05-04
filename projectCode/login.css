@@ -117,7 +117,26 @@ form {
     text-align: left;
     margin-bottom: 15px;
 }
+.error {
+    display: none;
+    font-size: 0.9em;
+    color: red;
+    margin-bottom: 10px;
+}
 
+input.valid {
+    border-color: green;
+}
+
+input:invalid {
+    border-color: red;
+}
+#emailStatus {
+margin-bottom: 1em;
+}
+#error, #emailStatus {
+    display: none;
+}
 .footer {
     background: #2f64ad;
     color: white;

@@ -1,11 +1,15 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Start session if needed
 session_start();
 
-// DB connection (same style as your other files)
+// DB connection
 $servername = "sci-project.lboro.ac.uk";
 $username = "295group6";
-$password = "wHiUtaTMrdizq3JfNeAH";  // your password
+$password = "wHiUtaTMrdizq3JfNeAH";
 $dbname = "295group6";
 
 // Create connection

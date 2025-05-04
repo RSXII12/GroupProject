@@ -103,7 +103,7 @@ $stmt->close();
                 </div>
                 <div class="listing-actions">
                     <!-- EDIT BUTTON -->
-                    <a href="itemDetails.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
+                    <a href="editItem.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
 
                     <!-- DELETE BUTTON -->
                     <form method="POST" style="display:inline;">

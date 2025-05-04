@@ -27,8 +27,9 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $itemId = htmlspecialchars($row["itemId"]);
+        $escapedItemId = htmlspecialchars($itemId);
         $title = htmlspecialchars($row["title"]);
-        $price = htmlspecialchars($row["price"]);
+        $price = htmlspecialchars($row["price"]);    
 
         echo '<a href="itemDetails.php?id=' . $itemId . '" class="item-link">';
         echo '<div class="item-container">';
@@ -63,7 +64,7 @@ if ($result->num_rows > 0) {
     echo "No items found.";
 }
 
-// Close connection
+$stmt->close();
 $conn->close();
 ?>
 

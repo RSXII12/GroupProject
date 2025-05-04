@@ -9,7 +9,7 @@ session_start();
 // DB connection
 $servername = "sci-project.lboro.ac.uk";
 $username = "295group6";
-$password = "wHiUtaTMrdizq3JfNeAH";
+$password = "wHiuTatMrdizq3JfNeAH";
 $dbname = "295group6";
 
 // Create connection

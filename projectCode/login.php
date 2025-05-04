@@ -6,21 +6,30 @@ $dbUsername = "295group6";
 $dbPassword = "wHiuTatMrdizq3JfNeAH"; 
 $dbName = "295group6"; 
 
-// Connect to MySQL database 
+// Connect to MySQL database securely
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
-// Check connection
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    error_log("Connection failed: " . $conn->connect_error);
+    die("Internal server error. Please try again later.");
 }
 
-// Check if form is submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $inputUsername = $_POST['username'];
-    $inputPassword = $_POST['password'];
-    
+// Handle POST request
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $inputUsername = trim($_POST['username'] ?? '');
+    $inputPassword = trim($_POST['password'] ?? '');
 
-    // Prepare SQL statement to prevent SQL injection
+    if ($inputUsername === '' || $inputPassword === '') {
+        echo "<script>alert('Username and password are required.'); window.location.href='login.html';</script>";
+        exit();
+    }
+
+    // Prepare SQL statement to avoid SQL injection
     $stmt = $conn->prepare("SELECT userId, password FROM iBayMembers WHERE name = ?");
+    if (!$stmt) {
+        error_log("Prepare failed: " . $conn->error);
+        die("Internal server error.");
+    }
+
     $stmt->bind_param("s", $inputUsername);
     $stmt->execute();
     $stmt->store_result();
@@ -28,23 +37,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($stmt->num_rows > 0) {
         $stmt->fetch();
-        // Verify the hashed password
         if (password_verify($inputPassword, $hashedPassword)) {
-            // Set session variables
+            // Start session and redirect
             $_SESSION['userId'] = $userId;
             $_SESSION['username'] = $inputUsername;
-            
-            // Redirect to seller page
             header("Location: buyerPage.php");
             exit();
         } else {
-            $temp = password_hash($inputPassword, PASSWORD_DEFAULT);
-            echo "<script>alert('Invalid password! password:$inputPassword,hash:$hashedPassword,hashedPassword:$temp '); window.location.href='login.html';</script>";
+            echo "<script>alert('Invalid password.'); window.location.href='login.html';</script>";
         }
     } else {
-        echo "<script>alert('User not found!'); window.location.href='login.html';</script>";
+        echo "<script>alert('User not found.'); window.location.href='login.html';</script>";
     }
+
     $stmt->close();
 }
+
 $conn->close();
 ?>

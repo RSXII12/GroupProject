@@ -38,7 +38,7 @@ if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
     $types .= "dd";
 }
 
-if (isset($_GET['timeRemaining']) && $_GET['timeRemaining'] !== '') {
+if (isset($_GET['timeRemaining']) && is_numeric($_GET['timeRemaining']) && intval($_GET['timeRemaining']) > 0) {
     $timeRemainingHours = intval($_GET['timeRemaining']);
     $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600);
     $whereConditions[] = "UNIX_TIMESTAMP(i.finish) <= ?";

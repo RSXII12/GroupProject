@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Listing</title>
     <link rel="stylesheet" href="sellerPage.css" />
-    <style>
-        .photo-preview img {
-            max-width: 100px;
-            margin-right: 10px;
-            border-radius: 8px;
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -26,6 +19,7 @@
                 <div class="form-group">
                     <label for="listing-name">Listing Name</label>
                     <input type="text" id="listing-name" name="listing-name" required />
+                    <div class="error" id="listingNameError">Listing name must be at least 4 characters.</div>
                 </div>
 
                 <div class="form-group">
@@ -48,11 +42,13 @@
                 <div class="form-group">
                     <label for="price">Price (£)</label>
                     <input type="number" id="price" name="price" step="0.01" required />
+                    <div class="error" id="priceError">Please enter a valid price.</div>
                 </div>
 
                 <div class="form-group">
                     <label for="postage-fee">Postage Fee (£)</label>
                     <input type="number" id="postage-fee" name="postage-fee" step="0.01" required />
+                    <div class="error" id="postageError">Please enter a valid postage fee.</div>
                 </div>
             </div>
 
@@ -60,6 +56,7 @@
                 <div class="form-group">
                     <label for="deadline">Listing Deadline</label>
                     <input type="datetime-local" id="deadline" name="deadline" required />
+                    <div class="error" id="deadlineError">Please select a deadline.</div>
                 </div>
 
                 <div class="form-group">
@@ -71,22 +68,25 @@
 
             <button type="submit" class="button">Create Listing</button>
         </form>
+        
     </div>
+    <div id="message-container"></div>
+    
 
     <div class="footer">
         © 2025-25 iBay Inc. All rights reserved
     </div>
 
     <script>
-        // Limit photo uploads to 2 and preview
+        // Photo preview logic
         const photoInput = document.getElementById("photo-input");
         const photoPreview = document.getElementById("photo-preview");
 
         photoInput.addEventListener("change", function () {
-            photoPreview.innerHTML = ""; // Clear preview
+            photoPreview.innerHTML = "";
             if (photoInput.files.length > 2) {
                 alert("You can only upload a maximum of 2 photos.");
-                photoInput.value = ""; // Reset file input
+                photoInput.value = "";
                 return;
             }
 
@@ -100,6 +100,72 @@
                 reader.readAsDataURL(file);
             });
         });
+
+        // Form validation logic
+        const form = document.getElementById('listing-form');
+
+        const fields = {
+            'listing-name': {
+                el: document.getElementById('listing-name'),
+                error: document.getElementById('listingNameError'),
+                validate: val => val.length >= 4
+            },
+            'price': {
+                el: document.getElementById('price'),
+                error: document.getElementById('priceError'),
+                validate: val => !isNaN(val) && val > 0
+            },
+            'postage-fee': {
+                el: document.getElementById('postage-fee'),
+                error: document.getElementById('postageError'),
+                validate: val => !isNaN(val) && val >= 0
+            },
+            'deadline': {
+                el: document.getElementById('deadline'),
+                error: document.getElementById('deadlineError'),
+                validate: val => val !== ""
+            }
+        };
+
+        Object.values(fields).forEach(field => {
+            field.el.addEventListener('input', () => {
+                const value = field.el.value.trim();
+                if (field.validate(value)) {
+                    field.el.classList.add('valid');
+                    field.el.classList.remove('invalid');
+                    field.error.style.display = 'none';
+                } else {
+                    field.el.classList.remove('valid');
+                    field.el.classList.add('invalid');
+                    field.error.style.display = 'block';
+                }
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            let valid = true;
+            Object.values(fields).forEach(field => {
+                const value = field.el.value.trim();
+                if (!field.validate(value)) {
+                    field.el.classList.add('invalid');
+                    field.error.style.display = 'block';
+                    valid = false;
+                }
+            });
+            if (!valid) e.preventDefault();
+        });
+    </script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const messageContainer = document.getElementById("message-container");
+    
+        if (params.has('success')) {
+            messageContainer.innerHTML = "<div class='success-message'>Your listing was successfully created.</div>";
+        }
+    
+        if (params.has('error')) {
+            messageContainer.innerHTML = "<div class='error-message'>Listing creation failed.</div>";
+        }
     </script>
 </body>
 </html>

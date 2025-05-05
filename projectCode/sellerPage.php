@@ -21,35 +21,57 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $conn->begin_transaction(); // Start transaction
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $conn->begin_transaction();
 
     try {
-        $listingName = $_POST['listing-name'];
-        $listingDepartment = $_POST['department'];
-        $listingDescription = $_POST['description'];
-        $listingPrice = $_POST['price'];
-        $listingPostage = $_POST['postage-fee'];
-        $listingDeadline = strtotime($_POST['deadline']);
-        $listingStart = date("Y-m-d H:i:s", time());
+        // Sanitize and collect inputs
+        $listingName = trim($_POST['listing-name'] ?? '');
+        $listingDepartment = trim($_POST['department'] ?? '');
+        $listingDescription = trim($_POST['description'] ?? '');
+        $listingPrice = $_POST['price'] ?? '';
+        $listingPostage = $_POST['postage-fee'] ?? '';
+        $listingDeadlineRaw = $_POST['deadline'] ?? '';
+        $listingDeadline = strtotime($listingDeadlineRaw);
+        $listingStart = date("Y-m-d H:i:s");
+        $listingDeadlineFormatted = date("Y-m-d H:i:s", $listingDeadline);
         $listingPhotos = $_FILES['photo-input'];
-        $listingId = md5(uniqid(rand(), true));  
-        $userId = $_SESSION['userId'];  
-        $listingDeadlineFormatted = date("Y-m-d H:i:s", $listingDeadline); 
+        $listingId = md5(uniqid(rand(), true));
+        $userId = $_SESSION['userId'];
 
-        // Insert into iBayItems
+        // Validation (images excluded)
+        if (strlen($listingName) < 4) {
+            throw new Exception("Listing name must be at least 4 characters.");
+        }
+
+        if (empty($listingDepartment)) {
+            throw new Exception("Department is required.");
+        }
+
+
+        if (!is_numeric($listingPrice) || $listingPrice <= 0) {
+            throw new Exception("Price must be a number greater than 0.");
+        }
+
+        if (!is_numeric($listingPostage) || $listingPostage < 0) {
+            throw new Exception("Postage fee must be a non-negative number.");
+        }
+
+        if (!$listingDeadline || $listingDeadline < time()) {
+            throw new Exception("Deadline must be a valid future date and time.");
+        }
+
+        // Insert listing into iBayItems table
         $stmt = $conn->prepare("INSERT INTO iBayItems (itemId, userId, title, category, description, price, postage, start, finish) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssssss", $listingId, $userId, $listingName, $listingDepartment, $listingDescription, $listingPrice, $listingPostage, $listingStart, $listingDeadlineFormatted);
         $stmt->execute();
         $stmt->close();
 
-        // Insert images if any
+        // Insert images (no validation applied)
         if (!empty($listingPhotos['name'][0])) {
             for ($i = 0; $i < count($listingPhotos['name']); $i++) {
                 $tmpName = $listingPhotos['tmp_name'][$i];
                 $fileName = $listingPhotos['name'][$i];
-                $fileType = $listingPhotos['type'][$i];
                 $fileSize = $listingPhotos['size'][$i];
                 $fileError = $listingPhotos['error'][$i];
 
@@ -63,20 +85,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $imgStmt->send_long_data(1, $imageData);
                     $imgStmt->execute();
                     $imgStmt->close();
-                } else {
-                    throw new Exception("Image upload failed for file: " . $fileName);
                 }
             }
         }
 
-        $conn->commit(); // Commit transaction
-        header("Location: buyerPage.php");
+        $conn->commit();
+        header("Location: sellerPage.html?success=1");
+        exit();
 
     } catch (Exception $e) {
-        $conn->rollback(); // Rollback all queries on error
-        error_log("Transaction failed: " . $e->getMessage());
-        echo "An error occurred while processing your listing. Please try again.";
-        header("Location: sellerPage.html");
+        $conn->rollback();
+        error_log("Listing submission failed: " . $e->getMessage());
+        $_SESSION['listing_error'] = $e->getMessage();
+        header("Location: sellerPage.html?error=1");
+        exit();
     }
 }
 

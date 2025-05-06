@@ -1,15 +1,16 @@
 <?php
 session_start();
 
-$servername = "sci-project.lboro.ac.uk"; 
-$dbUsername = "295group6"; 
-$dbPassword = "wHiuTatMrdizq3JfNeAH"; 
-$dbName = "295group6"; 
+$servername = "sci-project.lboro.ac.uk";
+$dbUsername = "295group6";
+$dbPassword = "wHiuTatMrdizq3JfNeAH";
+$dbName = "295group6";
 
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
 if ($conn->connect_error) {
-    error_log("Connection failed: " . $conn->connect_error);
-    die("Internal server error. Please try again later.");
+    error_log("DB connection failed: " . $conn->connect_error);
+    header("Location: sellerLogin.html?error=server");
+    exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -17,14 +18,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $inputPassword = trim($_POST['password'] ?? '');
 
     if ($inputEmail === '' || $inputPassword === '') {
-        echo "<script>alert('Email and password are required.'); window.location.href='login.html';</script>";
+        header("Location: sellerLogin.html?error=empty");
+        exit();
+    }
+
+    if (!filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
+        header("Location: sellerLogin.html?error=invalidemail");
         exit();
     }
 
     $stmt = $conn->prepare("SELECT userId, password, name FROM iBayMembers WHERE email = ?");
     if (!$stmt) {
         error_log("Prepare failed: " . $conn->error);
-        die("Internal server error.");
+        header("Location: sellerLogin.html?error=server");
+        exit();
     }
 
     $stmt->bind_param("s", $inputEmail);
@@ -36,14 +43,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->fetch();
         if (password_verify($inputPassword, $hashedPassword)) {
             $_SESSION['userId'] = $userId;
-            $_SESSION['username'] = $name; // Optional: store name for greeting
+            $_SESSION['username'] = $name;
             header("Location: buyerPage.php");
             exit();
         } else {
-            echo "<script>alert('Invalid password.'); window.location.href='login.html';</script>";
+            header("Location: sellerLogin.html?error=invalid");
+            exit();
         }
     } else {
-        echo "<script>alert('User not found.'); window.location.href='login.html';</script>";
+        header("Location: sellerLogin.html?error=notfound");
+        exit();
     }
 
     $stmt->close();

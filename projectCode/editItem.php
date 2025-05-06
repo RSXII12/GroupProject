@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = htmlspecialchars(trim($_POST['description']));
     $price = trim($_POST['price']);
     $postage = trim($_POST['postage']);
+    // Allowed categories to select - must be updated when new categories are added or removed
+    $allowedCategories = ["Fashion", "Technology", "Home & Garden"];
 
     $errors = [];
 
@@ -42,8 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Title is required.";
     }
 
+    if (strlen($title) < 4) {
+        $errors[] = "Title must be at least 4 characters long.";
+    }
+
     if (empty($category)) {
         $errors[] = "Category is required.";
+    }
+
+    if (!in_array($category, $allowedCategories)) {
+        $errors[] = "Invalid category selected";
     }
 
     if (empty($description)) {

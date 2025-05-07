@@ -15,82 +15,85 @@ $selectedCategory = $_GET['category'] ?? '';
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script>
     $(function () {
-        // Initialize slider
+        // Initialize price slider
         $("#price-slider").slider({
             range: true,
             min: 0,
-            max: 5000,
-            values: [0, 5000],
+            max: 500,
+            values: [0, 500],
             slide: function (event, ui) {
                 $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
                 $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
             }
         });
 
-        const sliderValues = $("#price-slider").slider("values");
-        $("#price-range").val("£" + sliderValues[0] + " - £" + sliderValues[1]);
-        $("#price-range-label").text("£" + sliderValues[0] + " - £" + sliderValues[1]);
+        // Set initial label
+        const slider = $("#price-slider").slider("values");
+        $("#price-range").val("£" + slider[0] + " - £" + slider[1]);
+        $("#price-range-label").text("£" + slider[0] + " - £" + slider[1]);
 
-        // Handle ?category=...
+        // Pre-fill department if URL has category param
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get("category");
         if (category) {
-            document.getElementById("department").value = category;
+            $("#department").val(category);
         }
 
-        // Now that slider is ready, run search
+        // Initial search
         performSearch();
 
-        // Attach filter events
+        // Hook up filters
         $("#search-button").on("click", performSearch);
         $("#apply-filters").on("click", performSearch);
         $("#sort-options").on("change", performSearch);
     });
 
     function performSearch() {
-    const searchText = $('#search-field').val().trim();
-    const [minPrice, maxPrice] = $("#price-slider").slider("values");
-    const timeRemaining = $('#time-remaining').val().trim();
-    const location = $('#location').val().trim();
-    const department = $('#department').val().trim();
+        const searchText = $('#search-field').val().trim();
+        const [minPrice, maxPrice] = $("#price-slider").slider("values");
+        const timeRemaining = $('#time-remaining').val().trim();
+        const location = $('#location').val().trim();
+        const department = $('#department').val().trim();
 
-    const params = {};
+        const params = {};
 
-    // Only include filters that are actually used
-    if (searchText !== "") params.searchText = searchText;
-    if (department !== "") params.department = department;
-    if (timeRemaining !== "") params.timeRemaining = timeRemaining;
-    if (location !== "") params.location = location;
+        if (searchText) params.searchText = searchText;
+        if (department) params.department = department;
+        if (timeRemaining) params.timeRemaining = timeRemaining;
+        if (location) params.location = location;
+        if (minPrice !== 0 || maxPrice !== 500) {
+            params.minPrice = minPrice;
+            params.maxPrice = maxPrice;
+        }
 
-    // Only add price range if it's changed from the default
-    if (minPrice !== 0 || maxPrice !== 5000) {
-        params.minPrice = minPrice;
-        params.maxPrice = maxPrice;
-    }
+        $.ajax({
+            url: 'search.php',
+            type: 'GET',
+            data: params,
+            dataType: 'json',
+            success: function (items) {
+                const sortBy = $('#sort-options').val();
 
-    fetch('search.php?' + new URLSearchParams(params))
-        .then(response => response.json())
-        .then(items => {
-            const sortBy = $('#sort-options').val();
+                if (sortBy === "price-asc") {
+                    items.sort((a, b) => a.price - b.price);
+                } else if (sortBy === "price-desc") {
+                    items.sort((a, b) => b.price - a.price);
+                } else if (sortBy === "time-asc") {
+                    items.sort((a, b) => a.time_remaining - b.time_remaining);
+                } else if (sortBy === "bid-desc") {
+                    items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
+                } else if (sortBy === "bid-asc") {
+                    items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
+                }
 
-            if (sortBy === "price-asc") {
-                items.sort((a, b) => a.price - b.price);
-            } else if (sortBy === "price-desc") {
-                items.sort((a, b) => b.price - a.price);
-            } else if (sortBy === "time-asc") {
-                items.sort((a, b) => a.time_remaining - b.time_remaining);
-            } else if (sortBy === "bid-desc") {
-                items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
-            } else if (sortBy === "bid-asc") {
-                items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
+                displayResults(items);
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", error);
+                $(".main-content").append("<p>Error loading results.</p>");
             }
-
-            displayResults(items);
-        })
-        .catch(error => {
-            console.error("Error fetching search results:", error);
         });
-}
+    }
 
     function displayResults(items) {
         const container = document.querySelector(".main-content");

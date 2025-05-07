@@ -13,67 +13,6 @@ $selectedCategory = $_GET['category'] ?? '';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-</head>
-<body>
-    <div class="header">
-        <?php if ($isLoggedIn): ?>
-            <span>Welcome! <a href="logout.php">Log out</a></span>
-        <?php else: ?>
-            <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
-        <?php endif; ?>
-        <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
-    </div>
-
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo" style="text-align: center; margin-bottom: 20px;">
-                <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
-            </div>
-            <div class="search-options">
-                <h3>Advanced Search</h3>
-                <select id="sort-options" class="sort-dropdown">
-                    <option value="">Sort By</option>
-                    <option value="price-asc">Starting Price: Low to High</option>
-                    <option value="price-desc">Starting Price: High to Low</option>
-                    <option value="bid-asc">Current Bid: Low to High</option>
-                    <option value="bid-desc">Current Bid: High to Low</option>
-                    <option value="time-asc">Time Remaining</option>
-                </select>
-                <label for="department">Department</label>
-                <select id="department" name="department">
-                    <option value="">Select a department</option>
-                    <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
-                    <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
-                    <option value="Home & Garden" <?= $selectedCategory === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
-                    <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
-                    <option value="Sports" <?= $selectedCategory === 'Sports' ? 'selected' : '' ?>>Sports</option>
-                </select>
-                <label for="price-range">Starting Price:</label>
-                <input type="text" id="price-range" readonly style="border:0;">
-                <div id="price-slider"></div>
-                <label for="time-remaining">Time Remaining (hours)</label>
-                <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
-                <label for="location">Location</label>
-                <input type="text" id="location" placeholder="Enter location">
-                <label>
-                    <input type="checkbox" id="free-postage"> Free Postage Only
-                </label>
-                <button id="apply-filters">Apply Filters</button>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="search-field" class="search-bar" placeholder="Search field">
-                <button id="search-button">Search</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        Copyright @2025-25 iBay Inc. All rights reserved
-    </div>
-
     <script>
         $(function () {
             $("#price-slider").slider({
@@ -196,5 +135,66 @@ $selectedCategory = $_GET['category'] ?? '';
             return `${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
     </script>
+</head>
+<body>
+    <div class="header">
+        <?php if ($isLoggedIn): ?>
+            <span>Welcome! <a href="logout.php">Log out</a></span>
+        <?php else: ?>
+            <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
+        <?php endif; ?>
+        <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo" style="text-align: center; margin-bottom: 20px;">
+                <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
+            </div>
+            <div class="search-options">
+                <h3>Advanced Search</h3>
+                <select id="sort-options" class="sort-dropdown">
+                    <option value="">Sort By</option>
+                    <option value="price-asc">Starting Price: Low to High</option>
+                    <option value="price-desc">Starting Price: High to Low</option>
+                    <option value="bid-asc">Current Bid: Low to High</option>
+                    <option value="bid-desc">Current Bid: High to Low</option>
+                    <option value="time-asc">Time Remaining</option>
+                </select>
+                <label for="department">Department</label>
+                <select id="department" name="department">
+                    <option value="">Select a department</option>
+                    <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
+                    <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
+                    <option value="Home & Garden" <?= $selectedCategory === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
+                    <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
+                    <option value="Sports" <?= $selectedCategory === 'Sports' ? 'selected' : '' ?>>Sports</option>
+                </select>
+                <label for="price-range">Starting Price:</label>
+                <input type="text" id="price-range" readonly style="border:0;">
+                <div id="price-slider"></div>
+                <label for="time-remaining">Time Remaining (hours)</label>
+                <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
+                <label for="location">Location</label>
+                <input type="text" id="location" placeholder="Enter location">
+                <label>
+                    <input type="checkbox" id="free-postage"> Free Postage Only
+                </label>
+                <button id="apply-filters">Apply Filters</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="search-field" class="search-bar" placeholder="Search field">
+                <button id="search-button">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Copyright @2025-25 iBay Inc. All rights reserved
+    </div>
+
 </body>
 </html>

@@ -13,138 +13,6 @@ $selectedCategory = $_GET['category'] ?? '';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script>
-    $(function () {
-        // Initialize price slider
-        $("#price-slider").slider({
-            range: true,
-            min: 0,
-            max: 500,
-            values: [0, 500],
-            slide: function (event, ui) {
-                $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
-                $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
-            }
-        });
-
-        // Set initial label
-        const slider = $("#price-slider").slider("values");
-        $("#price-range").val("£" + slider[0] + " - £" + slider[1]);
-        $("#price-range-label").text("£" + slider[0] + " - £" + slider[1]);
-
-        // Pre-fill department if URL has category param
-        const urlParams = new URLSearchParams(window.location.search);
-        const category = urlParams.get("category");
-        if (category) {
-            $("#department").val(category);
-        }
-
-        // Initial search
-        performSearch();
-
-        // Hook up filters
-        $("#search-button").on("click", performSearch);
-        $("#apply-filters").on("click", performSearch);
-        $("#sort-options").on("change", performSearch);
-    });
-
-    function performSearch() {
-        const searchText = $('#search-field').val().trim();
-        const [minPrice, maxPrice] = $("#price-slider").slider("values");
-        const timeRemaining = $('#time-remaining').val().trim();
-        const location = $('#location').val().trim();
-        const department = $('#department').val().trim();
-
-        const params = {};
-
-        if (searchText) params.searchText = searchText;
-        if (department) params.department = department;
-        if (timeRemaining) params.timeRemaining = timeRemaining;
-        if (location) params.location = location;
-        if (minPrice !== 0 || maxPrice !== 500) {
-            params.minPrice = minPrice;
-            params.maxPrice = maxPrice;
-        }
-
-        $.ajax({
-            url: 'search.php',
-            type: 'GET',
-            data: params,
-            dataType: 'json',
-            success: function (items) {
-                const sortBy = $('#sort-options').val();
-
-                if (sortBy === "price-asc") {
-                    items.sort((a, b) => a.price - b.price);
-                } else if (sortBy === "price-desc") {
-                    items.sort((a, b) => b.price - a.price);
-                } else if (sortBy === "time-asc") {
-                    items.sort((a, b) => a.time_remaining - b.time_remaining);
-                } else if (sortBy === "bid-desc") {
-                    items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
-                } else if (sortBy === "bid-asc") {
-                    items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
-                }
-
-                displayResults(items);
-            },
-            error: function (xhr, status, error) {
-                console.error("AJAX Error:", error);
-                $(".main-content").append("<p>Error loading results.</p>");
-            }
-        });
-    }
-
-    function displayResults(items) {
-        const container = document.querySelector(".main-content");
-        let existingResults = container.querySelector(".search-results");
-        if (existingResults) existingResults.remove();
-
-        const resultsDiv = document.createElement("div");
-        resultsDiv.classList.add("search-results");
-
-        let html = "";
-
-        if (!items.length) {
-            html += "<p>No matching items found.</p>";
-        } else {
-            items.forEach(item => {
-                html += `
-                    <div class="result-card">
-                        <a href="itemDetails.php?id=${item.itemId}" class="result-link">
-                            <div class="image-container">
-                                <img src="${item.image}" alt="${item.title}">
-                            </div>
-                            <div class="content">
-                                <h4>${item.title}</h4>
-                                <p class="category"><strong>Department:</strong> ${item.category}</p>
-                                <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
-                                <p class="price">
-                                    <strong>Starting Price:</strong> £${item.price} <br>
-                                    <strong>Current Bid:</strong> £${item.currentBid ?? item.price} (+ £${item.postage} postage)
-                                </p>
-                                <p class="location"><strong>Location:</strong> ${item.location}</p>
-                            </div>
-                        </a>
-                    </div>
-                `;
-            });
-        }
-
-        resultsDiv.innerHTML = html;
-        container.appendChild(resultsDiv);
-    }
-
-    function formatTime(seconds) {
-        const days = Math.floor(seconds / (3600 * 24));
-        seconds %= 3600 * 24;
-        const hours = Math.floor(seconds / 3600);
-        seconds %= 3600;
-        const minutes = Math.floor(seconds / 60);
-        seconds = Math.floor(seconds % 60);
-        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    }
-</script>
 </head>
 <body>
     <div class="header">
@@ -172,7 +40,7 @@ $selectedCategory = $_GET['category'] ?? '';
                     <option value="time-asc">Time Remaining</option>
                 </select>
                 <label for="department">Department</label>
-                <select id="department" name="department" required>
+                <select id="department" name="department">
                     <option value="">Select a department</option>
                     <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
                     <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
@@ -187,6 +55,9 @@ $selectedCategory = $_GET['category'] ?? '';
                 <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
                 <label for="location">Location</label>
                 <input type="text" id="location" placeholder="Enter location">
+                <label>
+                    <input type="checkbox" id="free-postage"> Free Postage Only
+                </label>
                 <button id="apply-filters">Apply Filters</button>
             </div>
         </div>
@@ -202,5 +73,128 @@ $selectedCategory = $_GET['category'] ?? '';
     <div class="footer">
         Copyright @2025-25 iBay Inc. All rights reserved
     </div>
+
+    <script>
+        $(function () {
+            $("#price-slider").slider({
+                range: true,
+                min: 0,
+                max: 5000,
+                values: [0, 5000],
+                slide: function (event, ui) {
+                    $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
+                    $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
+                }
+            });
+
+            const slider = $("#price-slider").slider("values");
+            $("#price-range").val("£" + slider[0] + " - £" + slider[1]);
+            $("#price-range-label").text("£" + slider[0] + " - £" + slider[1]);
+
+            performSearch();
+
+            $("#search-button").on("click", performSearch);
+            $("#apply-filters").on("click", performSearch);
+            
+        });
+
+        function performSearch() {
+            const searchText = $('#search-field').val().trim();
+            const [minPrice, maxPrice] = $("#price-slider").slider("values");
+            const timeRemaining = $('#time-remaining').val().trim();
+            const location = $('#location').val().trim();
+            const department = $('#department').val().trim();
+            const freePostage = $('#free-postage').is(':checked');
+
+            const params = {};
+            if (searchText) params.searchText = searchText;
+            if (department) params.department = department;
+            if (timeRemaining) params.timeRemaining = timeRemaining;
+            if (location) params.location = location;
+            if (freePostage) params.freePostage = 1;
+            if (minPrice !== 0 || maxPrice !== 5000) {
+                params.minPrice = minPrice;
+                params.maxPrice = maxPrice;
+            }
+
+            $.ajax({
+                url: 'search.php',
+                type: 'GET',
+                data: params,
+                dataType: 'json',
+                success: function (items) {
+                    const sortBy = $('#sort-options').val();
+
+                    if (sortBy === "price-asc") {
+                        items.sort((a, b) => a.price - b.price);
+                    } else if (sortBy === "price-desc") {
+                        items.sort((a, b) => b.price - a.price);
+                    } else if (sortBy === "time-asc") {
+                        items.sort((a, b) => a.time_remaining - b.time_remaining);
+                    } else if (sortBy === "bid-desc") {
+                        items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
+                    } else if (sortBy === "bid-asc") {
+                        items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
+                    }
+
+                    displayResults(items);
+                },
+                error: function (xhr, status, error) {
+                    console.error("AJAX Error:", error);
+                    $(".main-content").append("<p>Error loading results.</p>");
+                }
+            });
+        }
+
+        function displayResults(items) {
+            const container = document.querySelector(".main-content");
+            let existingResults = container.querySelector(".search-results");
+            if (existingResults) existingResults.remove();
+
+            const resultsDiv = document.createElement("div");
+            resultsDiv.classList.add("search-results");
+
+            let html = "";
+
+            if (!items.length) {
+                html += "<p>No matching items found.</p>";
+            } else {
+                items.forEach(item => {
+                    html += `
+                        <div class="result-card">
+                            <a href="itemDetails.php?id=${item.itemId}" class="result-link">
+                                <div class="image-container">
+                                    <img src="${item.image}" alt="${item.title}">
+                                </div>
+                                <div class="content">
+                                    <h4>${item.title}</h4>
+                                    <p class="category"><strong>Department:</strong> ${item.category}</p>
+                                    <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
+                                    <p class="price">
+                                        <strong>Starting Price:</strong> £${item.price} <br>
+                                        <strong>Current Bid:</strong> £${item.currentBid ?? item.price} (+ £${item.postage} postage)
+                                    </p>
+                                    <p class="location"><strong>Location:</strong> ${item.location}</p>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                });
+            }
+
+            resultsDiv.innerHTML = html;
+            container.appendChild(resultsDiv);
+        }
+
+        function formatTime(seconds) {
+            const days = Math.floor(seconds / (3600 * 24));
+            seconds %= 3600 * 24;
+            const hours = Math.floor(seconds / 3600);
+            seconds %= 3600;
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+    </script>
 </body>
 </html>

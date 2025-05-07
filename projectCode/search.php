@@ -64,7 +64,11 @@ if (isset($_GET['department']) && $_GET['department'] !== '') {
     $types .= "s";
 }
 
-// Subquery to get the first image per item
+if (isset($_GET['freePostage']) && $_GET['freePostage'] === '1') {
+    $whereConditions[] = "i.postage = 0";
+}
+
+// Main query
 $sql = "
     SELECT 
         i.itemId, i.title, i.category, i.description, i.price, i.postage, i.start, i.finish,

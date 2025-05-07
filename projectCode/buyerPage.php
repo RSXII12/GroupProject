@@ -1,6 +1,8 @@
 <?php
 session_start();
+//determine if user is logged in
 $isLoggedIn = isset($_SESSION['userId']);
+//get category from url if exists for lookup
 $selectedCategory = $_GET['category'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -10,11 +12,13 @@ $selectedCategory = $_GET['category'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>iBay Home</title>
     <link rel="stylesheet" href="buyerPage.css">
+    <!--jQuery and jQuery ui for sliders-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script>
         $(function () {
+            //initialise slider
             $("#price-slider").slider({
                 range: true,
                 min: 0,
@@ -25,26 +29,27 @@ $selectedCategory = $_GET['category'] ?? '';
                     $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
                 }
             });
-
+            //show initial label
             const slider = $("#price-slider").slider("values");
             $("#price-range").val("£" + slider[0] + " - £" + slider[1]);
             $("#price-range-label").text("£" + slider[0] + " - £" + slider[1]);
-
+            //auto search on page load (url category integration)
             performSearch();
-
+            //connect search buttons with function
             $("#search-button").on("click", performSearch);
             $("#apply-filters").on("click", performSearch);
             
         });
 
         function performSearch() {
+            //select filters
             const searchText = $('#search-field').val().trim();
             const [minPrice, maxPrice] = $("#price-slider").slider("values");
             const timeRemaining = $('#time-remaining').val().trim();
             const location = $('#location').val().trim();
             const department = $('#department').val().trim();
             const freePostage = $('#free-postage').is(':checked');
-
+            //add conditionally
             const params = {};
             if (searchText) params.searchText = searchText;
             if (department) params.department = department;
@@ -55,7 +60,7 @@ $selectedCategory = $_GET['category'] ?? '';
                 params.minPrice = minPrice;
                 params.maxPrice = maxPrice;
             }
-
+            //send ajax request
             $.ajax({
                 url: 'search.php',
                 type: 'GET',
@@ -63,7 +68,7 @@ $selectedCategory = $_GET['category'] ?? '';
                 dataType: 'json',
                 success: function (items) {
                     const sortBy = $('#sort-options').val();
-
+                    //sort on client side
                     if (sortBy === "price-asc") {
                         items.sort((a, b) => a.price - b.price);
                     } else if (sortBy === "price-desc") {
@@ -75,7 +80,7 @@ $selectedCategory = $_GET['category'] ?? '';
                     } else if (sortBy === "bid-asc") {
                         items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
                     }
-
+                    //render results
                     displayResults(items);
                 },
                 error: function (xhr, status, error) {
@@ -98,6 +103,7 @@ $selectedCategory = $_GET['category'] ?? '';
             if (!items.length) {
                 html += "<p>No matching items found.</p>";
             } else {
+                //render itemCards
                 items.forEach(item => {
                     html += `
                         <div class="result-card">
@@ -137,6 +143,7 @@ $selectedCategory = $_GET['category'] ?? '';
     </script>
 </head>
 <body>
+    <!--Header-->
     <div class="header">
         <?php if ($isLoggedIn): ?>
             <span>Welcome! <a href="logout.php">Log out</a></span>
@@ -145,14 +152,16 @@ $selectedCategory = $_GET['category'] ?? '';
         <?php endif; ?>
         <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
     </div>
-
+    <!-- MAIN LAYOUT -->        
     <div class="container">
+        <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="logo" style="text-align: center; margin-bottom: 20px;">
                 <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
             </div>
             <div class="search-options">
                 <h3>Advanced Search</h3>
+                <!-- Sort dropdown -->
                 <select id="sort-options" class="sort-dropdown">
                     <option value="">Sort By</option>
                     <option value="price-asc">Starting Price: Low to High</option>
@@ -161,6 +170,8 @@ $selectedCategory = $_GET['category'] ?? '';
                     <option value="bid-desc">Current Bid: High to Low</option>
                     <option value="time-asc">Time Remaining</option>
                 </select>
+
+                <!-- Department filter -->
                 <label for="department">Department</label>
                 <select id="department" name="department">
                     <option value="">Select a department</option>
@@ -170,20 +181,28 @@ $selectedCategory = $_GET['category'] ?? '';
                     <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
                     <option value="Sports" <?= $selectedCategory === 'Sports' ? 'selected' : '' ?>>Sports</option>
                 </select>
+
+                <!-- Price Range -->
                 <label for="price-range">Starting Price:</label>
                 <input type="text" id="price-range" readonly style="border:0;">
                 <div id="price-slider"></div>
+
+                <!-- Time remaining filter -->
                 <label for="time-remaining">Time Remaining (hours)</label>
                 <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
+
+                <!-- Location filter -->
                 <label for="location">Location</label>
                 <input type="text" id="location" placeholder="Enter location">
+
+                <!-- Free postage toggle -->
                 <label>
                     <input type="checkbox" id="free-postage"> Free Postage Only
                 </label>
                 <button id="apply-filters">Apply Filters</button>
             </div>
         </div>
-
+        <!-- SEARCH & RESULTS -->
         <div class="main-content">
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="search-field" class="search-bar" placeholder="Search field">
@@ -191,7 +210,7 @@ $selectedCategory = $_GET['category'] ?? '';
             </div>
         </div>
     </div>
-
+    <!-- FOOTER -->        
     <div class="footer">
         Copyright @2025-25 iBay Inc. All rights reserved
     </div>

@@ -4,33 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Login</title>
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="login.css"> <!-- shared login/signup styles -->
 </head>
 <body>
+    <!-- top header with logo -->
     <div class="header">
         <div class="header-left"><a href="index.php"><img src="iBay-logo.png" alt="iBay logo"></a></div>
         <div class="header-center">iBay Login</div>
         <div class="header-right"></div>
     </div>
 
+    <!-- login form -->
     <div class="login-container">
         <h2>Login to Your Account</h2>
         <div id="error-message" class="error-message"></div>
+
         <form method="POST" action="login.php">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" required>
+
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required>
+
             <button type="submit">Login</button>
         </form>
     </div>
 
+    <!-- alt option -->
     <p><a href="sellerSignUp.html">Sign up</a> instead</p>
 
+    <!-- footer -->
     <div class="footer">
         Copyright @2025-25 iBay Inc. All rights reserved
     </div>
 
+    <!-- JS handles query error feedback -->
     <script>
         const params = new URLSearchParams(window.location.search);
         const error = params.get("error");

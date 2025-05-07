@@ -7,14 +7,17 @@
     <link rel="stylesheet" href="sellerPage.css" />
 </head>
 <body>
+    <!-- top nav/header -->
     <div class="header">
         <div class="header-left"><a href="index.php"><img src="iBay-logo.png" alt="iBay Logo"></a></div>
         <div class="header-center">Create a new listing</div>
         <div class="header-right"></div>
     </div>
 
+    <!-- listing form -->
     <div class="form-container">
         <form method="post" action="sellerPage.php" enctype="multipart/form-data" id="listing-form">
+            <!-- title + department -->
             <div class="row">
                 <div class="form-group">
                     <label for="listing-name">Listing Name</label>
@@ -35,11 +38,13 @@
                 </div>
             </div>
 
+            <!-- description -->
             <div class="form-group">
                 <label for="description">Item Description</label>
                 <textarea id="description" name="description" rows="4"></textarea>
             </div>
 
+            <!-- price + postage -->
             <div class="row">
                 <div class="form-group">
                     <label for="price"> Starting Price (£)</label>
@@ -54,6 +59,7 @@
                 </div>
             </div>
 
+            <!-- deadline + image upload -->
             <div class="row">
                 <div class="form-group">
                     <label for="deadline">Listing Deadline</label>
@@ -72,6 +78,7 @@
         </form>
     </div>
 
+    <!-- messages shown after redirect -->
     <div id="message-container"></div>
 
     <div class="footer">
@@ -79,6 +86,7 @@
     </div>
 
     <script>
+        // show thumbnail previews
         const photoInput = document.getElementById("photo-input");
         const photoPreview = document.getElementById("photo-preview");
 
@@ -101,7 +109,7 @@
             });
         });
 
-        // Client-side field validation
+        // client-side validation setup
         const form = document.getElementById('listing-form');
         const fields = {
             'listing-name': {
@@ -110,10 +118,10 @@
                 validate: val => val.length >= 4
             },
             'price': {
-            el: document.getElementById('price'),
-            error: document.getElementById('priceError'),
-            validate: val => !isNaN(val) && val > 0 && val <= 5000
-        },
+                el: document.getElementById('price'),
+                error: document.getElementById('priceError'),
+                validate: val => !isNaN(val) && val > 0 && val <= 5000
+            },
             'postage-fee': {
                 el: document.getElementById('postage-fee'),
                 error: document.getElementById('postageError'),
@@ -126,6 +134,7 @@
             }
         };
 
+        // live field checks
         Object.values(fields).forEach(field => {
             field.el.addEventListener('input', () => {
                 const value = field.el.value.trim();
@@ -141,6 +150,7 @@
             });
         });
 
+        // on form submit, validate everything
         form.addEventListener('submit', (e) => {
             let valid = true;
             Object.values(fields).forEach(field => {
@@ -154,7 +164,7 @@
             if (!valid) e.preventDefault();
         });
 
-        // Show message on redirect
+        // show success/error after redirect
         const params = new URLSearchParams(window.location.search);
         const messageContainer = document.getElementById("message-container");
 

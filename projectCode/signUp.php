@@ -1,31 +1,33 @@
 <?php
-session_start();
+session_start(); // start session for future use
 
+// DB config
 $servername = "sci-project.lboro.ac.uk";
 $dbUsername = "295group6";
 $dbPassword = "wHiuTatMrdizq3JfNeAH";
 $dbName = "295group6";
 
+// connect to DB
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
 if ($conn->connect_error) {
-    // Log and show generic error to avoid exposing details
     error_log("Connection failed: " . $conn->connect_error);
-    die("Internal server error. Please try again later.");
+    die("Internal server error. Please try again later."); // don’t show real error to user
 }
 
+// basic postcode pattern
 function isValidPostcode($postcode) {
     return preg_match("/^[A-Z0-9 ]{5,8}$/i", $postcode);
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Trim and fetch input safely
+    // get inputs safely
     $inputUsername = trim($_POST['username'] ?? '');
     $inputPassword = trim($_POST['password'] ?? '');
     $inputEmail = trim($_POST['email'] ?? '');
     $inputAddress = trim($_POST['address'] ?? '');
     $inputPostcode = trim($_POST['postcode'] ?? '');
 
-    // Basic validation
+    // basic checks
     if (
         strlen($inputUsername) < 4 ||
         strlen($inputPassword) < 4 ||
@@ -36,11 +38,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 
-    // Hash password safely
+    // hash password & create user ID
     $hashedPassword = password_hash($inputPassword, PASSWORD_DEFAULT);
     $userId = hash("sha256", $inputUsername . $inputAddress . $inputEmail);
 
-    // Use prepared statement to check for existing email
+    // check if email exists
     $stmt = $conn->prepare("SELECT userId FROM iBayMembers WHERE email = ?");
     if (!$stmt) {
         error_log("Prepare failed: " . $conn->error);
@@ -58,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     $stmt->close();
 
-    // Insert new user securely
+    // insert user
     $stmt = $conn->prepare("
         INSERT INTO iBayMembers (userId, password, name, email, address, postcode)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -70,6 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $stmt->bind_param("ssssss", $userId, $hashedPassword, $inputUsername, $inputEmail, $inputAddress, $inputPostcode);
 
+    // save or fail
     if ($stmt->execute()) {
         $stmt->close();
         echo "<script>alert('Registration successful!'); window.location.href='sellerLogin.html';</script>";
@@ -79,5 +82,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-$conn->close();
+$conn->close(); 
 ?>

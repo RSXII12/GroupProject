@@ -1,15 +1,13 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
+// Start session and check login
 session_start();
-
 if (!isset($_SESSION['userId'])) {
     header("Location: sellerLogin.html");
     exit();
 }
 
+// DB setup
 $servername = "sci-project.lboro.ac.uk"; 
 $dbUsername = "295group6"; 
 $dbPassword = "wHiuTatMrdizq3JfNeAH"; 
@@ -20,10 +18,12 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Handle POST only
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $conn->begin_transaction();
 
     try {
+        // Gather + sanitize input
         $listingName = trim($_POST['listing-name'] ?? '');
         $listingDepartment = trim($_POST['department'] ?? '');
         $listingDescription = trim($_POST['description'] ?? '');
@@ -37,21 +37,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $listingId = md5(uniqid(rand(), true));
         $userId = $_SESSION['userId'];
 
-        // Validation
+        // Validate core fields
         if (strlen($listingName) < 4) throw new Exception("Listing name must be at least 4 characters.");
         if (empty($listingDepartment)) throw new Exception("Department is required.");
-
+        
+        // Validate department against list
         $validDepartments = ['Technology', 'Fashion', 'Home & Garden', 'Toys', 'Sports'];
         if (!in_array($listingDepartment, $validDepartments)) {
             throw new Exception("Invalid department selected.");
         }
 
-        if (!is_numeric($listingPrice) || $listingPrice <= 0 || $listingPrice > 5000) {throw new Exception("Price must be greater than 0 and no more than £5000.");
+        // Validate price and postage
+        if (!is_numeric($listingPrice) || $listingPrice <= 0 || $listingPrice > 5000) {
+            throw new Exception("Price must be greater than 0 and no more than £5000.");
         }
-        if (!is_numeric($listingPostage) || $listingPostage < 0) throw new Exception("Postage fee must be a non-negative number.");
-        if (!$listingDeadline || $listingDeadline < time()) throw new Exception("Deadline must be a valid future date and time.");
+        if (!is_numeric($listingPostage) || $listingPostage < 0) {
+            throw new Exception("Postage fee must be a non-negative number.");
+        }
 
-        $maxFileSize = 5 * 1024 * 1024;
+        // Deadline must be in the future
+        if (!$listingDeadline || $listingDeadline < time()) {
+            throw new Exception("Deadline must be a valid future date and time.");
+        }
+
+        // Validate uploaded images
+        $maxFileSize = 5 * 1024 * 1024; // 5 MB max
         if (!empty($listingPhotos['name'][0])) {
             if (count($listingPhotos['name']) > 2) {
                 throw new Exception("You may upload a maximum of 2 images.");
@@ -78,11 +88,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
+        // Insert item
         $stmt = $conn->prepare("INSERT INTO iBayItems (itemId, userId, title, category, description, price, postage, start, finish) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssssss", $listingId, $userId, $listingName, $listingDepartment, $listingDescription, $listingPrice, $listingPostage, $listingStart, $listingDeadlineFormatted);
         $stmt->execute();
         $stmt->close();
 
+        // Insert images if any
         if (!empty($listingPhotos['name'][0])) {
             for ($i = 0; $i < count($listingPhotos['name']); $i++) {
                 $tmpName = $listingPhotos['tmp_name'][$i];
@@ -104,11 +116,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
+        // commit transaction
         $conn->commit();
         header("Location: sellerPage.html?success=1");
         exit();
 
-    } catch (Exception $e) {
+    } catch (Exception $e) { //throw error and rollback transaction
         $conn->rollback();
         $_SESSION['listing_error'] = $e->getMessage();
         echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
@@ -116,5 +129,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-$conn->close();
+$conn->close(); // exit
 ?>

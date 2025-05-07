@@ -1,176 +1,149 @@
+<?php
+session_start();
+$isLoggedIn = isset($_SESSION['userId']);
+$selectedCategory = $_GET['category'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="en">
-    <head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>iBay Home</title>
+    <link rel="stylesheet" href="buyerPage.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script>
+    $(function () {
+        // Initialize slider
+        $("#price-slider").slider({
+            range: true,
+            min: 0,
+            max: 5000,
+            values: [0, 5000],
+            slide: function (event, ui) {
+                $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
+                $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
+            }
+        });
 
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>iBay Home</title>
-        <link rel="stylesheet" href="buyerPage.css">
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-        <?php
-        session_start();
-        $isLoggedIn = isset($_SESSION['userId']); 
-        ?>
-        <script>
-            $(function() {
-                $("#price-slider").slider({
-                    range: true,
-                    min: 0,
-                    max: 500,
-                    values: [0, 500],
-                    slide: function(event, ui) {
-                        $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
-                        $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
-                    }
-                });
-        
-                $("#price-range").val("£" + $("#price-slider").slider("values", 0) +
-                    " - £" + $("#price-slider").slider("values", 1));
-                $("#price-range-label").text("£" + $("#price-slider").slider("values", 0) +
-                    " - £" + $("#price-slider").slider("values", 1));
-            });
-        
-            function performSearch() {
-                console.log("Search button clicked!");
+        const sliderValues = $("#price-slider").slider("values");
+        $("#price-range").val("£" + sliderValues[0] + " - £" + sliderValues[1]);
+        $("#price-range-label").text("£" + sliderValues[0] + " - £" + sliderValues[1]);
 
-                const searchText = $('#search-field').val();
-                const [minPrice, maxPrice] = $("#price-slider").slider("values");
-                const timeRemaining = $('#time-remaining').val();
-                const location = $('#location').val();
-                const department = $('#department').val();  // Get selected department
+        // Handle ?category=...
+        const urlParams = new URLSearchParams(window.location.search);
+        const category = urlParams.get("category");
+        if (category) {
+            document.getElementById("department").value = category;
+        }
 
-                // Create an object for our parameters
-                const params = {};
-                
-                // Only add parameters that are actually set by the user
-                if (searchText) params.searchText = searchText;
-                
-                // Only apply price filter if it's not at default values
-                const defaultMinPrice = 0;
-                const defaultMaxPrice = 500;
-                if (minPrice !== defaultMinPrice || maxPrice !== defaultMaxPrice) {
-                    params.minPrice = minPrice;
-                    params.maxPrice = maxPrice;
-                }
-                
-                if (timeRemaining) params.timeRemaining = timeRemaining;
-                if (location) params.location = location;
-                if (department) params.department = department;  // Add department to params
+        // Now that slider is ready, run search
+        performSearch();
 
-                $.ajax({
-                    url: 'search.php',  
-                    type: 'GET',
-                    dataType: 'json',
-                    data: params,  // Send all the parameters in the AJAX request
-                    success: function(items) {
-                        console.log("Results:", items);
-                        const sortBy = $('#sort-options').val();
+        // Attach filter events
+        $("#search-button").on("click", performSearch);
+        $("#apply-filters").on("click", performSearch);
+        $("#sort-options").on("change", performSearch);
+    });
 
-                        if (sortBy === "price-asc") {
-                            items.sort((a, b) => a.price - b.price);
-                        } else if (sortBy === "price-desc") {
-                            items.sort((a, b) => b.price - a.price);
-                        } else if (sortBy === "time-asc") {
-                            items.sort((a, b) => a.time_remaining - b.time_remaining);
-                        } else if (sortBy === "bid-desc") {
-                            items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
-                        } else if (sortBy === "bid-asc") {
-                            items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
-                        }
-                        displayResults(items);  // Call function to display the results
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("AJAX Error:", error);
-                        console.log(xhr.responseText);
-                    }
-                });
+    function performSearch() {
+    const searchText = $('#search-field').val().trim();
+    const [minPrice, maxPrice] = $("#price-slider").slider("values");
+    const timeRemaining = $('#time-remaining').val().trim();
+    const location = $('#location').val().trim();
+    const department = $('#department').val().trim();
+
+    const params = {};
+
+    // Only include filters that are actually used
+    if (searchText !== "") params.searchText = searchText;
+    if (department !== "") params.department = department;
+    if (timeRemaining !== "") params.timeRemaining = timeRemaining;
+    if (location !== "") params.location = location;
+
+    // Only add price range if it's changed from the default
+    if (minPrice !== 0 || maxPrice !== 5000) {
+        params.minPrice = minPrice;
+        params.maxPrice = maxPrice;
+    }
+
+    fetch('search.php?' + new URLSearchParams(params))
+        .then(response => response.json())
+        .then(items => {
+            const sortBy = $('#sort-options').val();
+
+            if (sortBy === "price-asc") {
+                items.sort((a, b) => a.price - b.price);
+            } else if (sortBy === "price-desc") {
+                items.sort((a, b) => b.price - a.price);
+            } else if (sortBy === "time-asc") {
+                items.sort((a, b) => a.time_remaining - b.time_remaining);
+            } else if (sortBy === "bid-desc") {
+                items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
+            } else if (sortBy === "bid-asc") {
+                items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
             }
 
-            function formatTime(seconds) {
-                const days = Math.floor(seconds / (3600 * 24));
-                seconds %= 3600 * 24;
-                const hours = Math.floor(seconds / 3600);
-                seconds %= 3600;
-                const minutes = Math.floor(seconds / 60);
-                seconds = Math.floor(seconds % 60);
+            displayResults(items);
+        })
+        .catch(error => {
+            console.error("Error fetching search results:", error);
+        });
+}
 
-                return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-            }
-        
-            function displayResults(items) {
-                const container = document.querySelector(".main-content");
-                
-                // Check if there is already a results container and remove it
-                let existingResults = container.querySelector(".search-results");
-                if (existingResults) {
-                    existingResults.remove();  // Remove the old results if present
-                }
+    function displayResults(items) {
+        const container = document.querySelector(".main-content");
+        let existingResults = container.querySelector(".search-results");
+        if (existingResults) existingResults.remove();
 
-                // Create a new div to hold the results
-                const resultsDiv = document.createElement("div");
-                resultsDiv.classList.add("search-results");
-                
-                let html = "";
+        const resultsDiv = document.createElement("div");
+        resultsDiv.classList.add("search-results");
 
-                if (!items.length) {
-                    html += "<p>No matching items found.</p>";
-                } else {
-                    items.forEach(item => {
-                        html += `
-                            <div class="result-card">
-                                <a href="itemDetails.php?id=${item.itemId}" class="result-link">
-                                    <div class="image-container">
-                                        <img src="${item.image}" alt="${item.title}">
-                                    </div>
-                                    <div class="content">
-                                        <h4>${item.title}</h4>
-                                        <p class="category"><strong>Department:</strong> ${item.category}</p>
-                                        <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
-                                        <p class="price">
-                                        <strong>Starting Price:</strong> £${item.price} <br>
-                                        <strong>Current Bid:</strong> £${item.currentBid ?? item.price} (+ £${item.postage} postage)</p>
-                                        <p class="location"><strong>Location:</strong> ${item.location}</p>
-                                    </div>
-                                </a>
+        let html = "";
+
+        if (!items.length) {
+            html += "<p>No matching items found.</p>";
+        } else {
+            items.forEach(item => {
+                html += `
+                    <div class="result-card">
+                        <a href="itemDetails.php?id=${item.itemId}" class="result-link">
+                            <div class="image-container">
+                                <img src="${item.image}" alt="${item.title}">
                             </div>
-                        `;
-                    });
-                }
-
-                resultsDiv.innerHTML = html;
-
-                // Append the new results below the search bar
-                container.appendChild(resultsDiv);
-            }
-
-        
-            document.addEventListener("DOMContentLoaded", function() 
-            {
-                // Check for category in URL and auto-set the filter
-                const urlParams = new URLSearchParams(window.location.search);
-                const category = urlParams.get("category");
-
-                if (category) 
-                {
-                    const departmentSelect = document.getElementById("department");
-                    departmentSelect.value = category;
-                }
-
-                 // Wait a tiny bit to ensure UI like the price slider is ready, then trigger search
-                    setTimeout(() => {
-                        performSearch();
-                    }, 100);
-                // Wire both buttons to performSearch
-                document.getElementById("search-button").addEventListener("click", performSearch);
-                document.getElementById("apply-filters").addEventListener("click", performSearch);
-                $('#sort-options').on('change', performSearch);
+                            <div class="content">
+                                <h4>${item.title}</h4>
+                                <p class="category"><strong>Department:</strong> ${item.category}</p>
+                                <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
+                                <p class="price">
+                                    <strong>Starting Price:</strong> £${item.price} <br>
+                                    <strong>Current Bid:</strong> £${item.currentBid ?? item.price} (+ £${item.postage} postage)
+                                </p>
+                                <p class="location"><strong>Location:</strong> ${item.location}</p>
+                            </div>
+                        </a>
+                    </div>
+                `;
             });
-            
-        </script>
-    </head>
-    <body>
+        }
+
+        resultsDiv.innerHTML = html;
+        container.appendChild(resultsDiv);
+    }
+
+    function formatTime(seconds) {
+        const days = Math.floor(seconds / (3600 * 24));
+        seconds %= 3600 * 24;
+        const hours = Math.floor(seconds / 3600);
+        seconds %= 3600;
+        const minutes = Math.floor(seconds / 60);
+        seconds = Math.floor(seconds % 60);
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+</script>
+</head>
+<body>
     <div class="header">
         <?php if ($isLoggedIn): ?>
             <span>Welcome! <a href="logout.php">Log out</a></span>
@@ -179,51 +152,52 @@
         <?php endif; ?>
         <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
     </div>
-    
-        <div class="container">
-            <div class="sidebar">
-                <div class="logo" style="text-align: center; margin-bottom: 20px;">
-                    <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
-                </div>
-                <div class="search-options">
-                    <h3>Advanced Search</h3>
-                    <select id="sort-options" class="sort-dropdown">
-                        <option value="">Sort By</option>
-                        <option value="price-asc">Starting Price: Low to High</option>
-                        <option value="price-desc">Starting Price: High to Low</option>
-                        <option value="bid-asc">Current Bid: Low to High</option>
-                        <option value="bid-desc">Current Bid: High to Low</option>
-                        <option value="time-asc">Time Remaining</option>
-                    </select>
-                    <label for="department">Department</label>
-                    <select id="department" name="department" required>
-                        <option value="">Select a department</option>
-                        <option value="Technology">Technology</option>
-                        <option value="Fashion">Fashion</option>
-                        <option value="Home & Garden">Home & Garden</option>
-                    </select>
-                    <label for="price-range">Price Range:</label>
-                    <input type="text" id="price-range" readonly style="border:0;">
-                    <div id="price-slider"></div>
-                    <label for="time-remaining">Time Remaining (hours)</label>
-                    <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" placeholder="Enter location">
-                    <button id="apply-filters">Apply Filters</button>
-                </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo" style="text-align: center; margin-bottom: 20px;">
+                <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
             </div>
-    
-            <div class="main-content">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="search-field" class="search-bar" placeholder="Search field">
-                    <button id="search-button">Search</button>
-                </div>
-                
+            <div class="search-options">
+                <h3>Advanced Search</h3>
+                <select id="sort-options" class="sort-dropdown">
+                    <option value="">Sort By</option>
+                    <option value="price-asc">Starting Price: Low to High</option>
+                    <option value="price-desc">Starting Price: High to Low</option>
+                    <option value="bid-asc">Current Bid: Low to High</option>
+                    <option value="bid-desc">Current Bid: High to Low</option>
+                    <option value="time-asc">Time Remaining</option>
+                </select>
+                <label for="department">Department</label>
+                <select id="department" name="department" required>
+                    <option value="">Select a department</option>
+                    <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
+                    <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
+                    <option value="Home & Garden" <?= $selectedCategory === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
+                    <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
+                    <option value="Sports" <?= $selectedCategory === 'Sports' ? 'selected' : '' ?>>Sports</option>
+                </select>
+                <label for="price-range">Starting Price:</label>
+                <input type="text" id="price-range" readonly style="border:0;">
+                <div id="price-slider"></div>
+                <label for="time-remaining">Time Remaining (hours)</label>
+                <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
+                <label for="location">Location</label>
+                <input type="text" id="location" placeholder="Enter location">
+                <button id="apply-filters">Apply Filters</button>
             </div>
         </div>
-    
-        <div class="footer">
-            Copyright @2025-25 iBay Inc. All rights reserved
+
+        <div class="main-content">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="search-field" class="search-bar" placeholder="Search field">
+                <button id="search-button">Search</button>
+            </div>
         </div>
-    </body>
+    </div>
+
+    <div class="footer">
+        Copyright @2025-25 iBay Inc. All rights reserved
+    </div>
+</body>
 </html>

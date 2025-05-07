@@ -29,20 +29,22 @@
                         <option>Technology</option>
                         <option>Fashion</option>
                         <option>Home & Garden</option>
+                        <option>Toys</option>
+                        <option>Sports</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="description">Item Description</label>
-                <textarea id="description" name="description" rows="4" required></textarea>
+                <textarea id="description" name="description" rows="4"></textarea>
             </div>
 
             <div class="row">
                 <div class="form-group">
-                    <label for="price">Price (£)</label>
-                    <input type="number" id="price" name="price" step="0.01" required />
-                    <div class="error" id="priceError">Please enter a valid price.</div>
+                    <label for="price"> Starting Price (£)</label>
+                    <input type="number" id="price" name="price" step="0.01" max="5000" required />
+                    <div class="error" id="priceError">Price must be between £0 and £5000.</div>
                 </div>
 
                 <div class="form-group">
@@ -68,17 +70,15 @@
 
             <button type="submit" class="button">Create Listing</button>
         </form>
-        
     </div>
+
     <div id="message-container"></div>
-    
 
     <div class="footer">
         © 2025-25 iBay Inc. All rights reserved
     </div>
 
     <script>
-        // Photo preview logic
         const photoInput = document.getElementById("photo-input");
         const photoPreview = document.getElementById("photo-preview");
 
@@ -101,9 +101,8 @@
             });
         });
 
-        // Form validation logic
+        // Client-side field validation
         const form = document.getElementById('listing-form');
-
         const fields = {
             'listing-name': {
                 el: document.getElementById('listing-name'),
@@ -111,10 +110,10 @@
                 validate: val => val.length >= 4
             },
             'price': {
-                el: document.getElementById('price'),
-                error: document.getElementById('priceError'),
-                validate: val => !isNaN(val) && val > 0
-            },
+            el: document.getElementById('price'),
+            error: document.getElementById('priceError'),
+            validate: val => !isNaN(val) && val > 0 && val <= 5000
+        },
             'postage-fee': {
                 el: document.getElementById('postage-fee'),
                 error: document.getElementById('postageError'),
@@ -154,15 +153,14 @@
             });
             if (!valid) e.preventDefault();
         });
-    </script>
-    <script>
+
+        // Show message on redirect
         const params = new URLSearchParams(window.location.search);
         const messageContainer = document.getElementById("message-container");
-    
+
         if (params.has('success')) {
             messageContainer.innerHTML = "<div class='success-message'>Your listing was successfully created.</div>";
         }
-    
         if (params.has('error')) {
             messageContainer.innerHTML = "<div class='error-message'>Listing creation failed.</div>";
         }

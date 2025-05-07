@@ -1,6 +1,8 @@
 <?php
+session_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
+$sellLink = isset($_SESSION['userId']) ? 'sellerPage.html' : 'sellerLogin.html';
 ?>
 
 <!DOCTYPE html>
@@ -28,7 +30,7 @@ error_reporting(E_ALL);
     <div class="nav-container">
         <div class="w3-bar">
             <a href="buyerPage.php" class="w3-bar-item w3-button">Browse</a>
-            <a href="sellerLogin.html" class="w3-bar-item w3-button">Sell</a>
+            <a href="<?= $sellLink ?>" class="w3-bar-item w3-button">Sell</a>
         </div>
     </div>
 

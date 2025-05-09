@@ -1,29 +1,30 @@
 <?php
+session_start();
 
-// DB connection config
+header('Content-Type: application/json');
+
 $servername = "sci-project.lboro.ac.uk"; 
 $dbUsername = "295group6"; 
 $dbPassword = "wHiuTatMrdizq3JfNeAH"; 
 $dbName = "295group6"; 
 
-header('Content-Type: application/json');
-
-// connect to DB
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
 if ($conn->connect_error) {
-    echo json_encode(["error" => "Database connection failed: " . $conn->connect_error]);
+    echo json_encode(["error" => "Database connection failed."]);
     exit;
 }
 
-$whereConditions = []; // conditions for WHERE clause
-$params = [];          // values for bind_param
-$types = "";           // type string for bind_param
-$currentTimestamp = time(); // current time for filtering
+$whereConditions = [];
+$params = [];
+$types = "";
+$currentTimestamp = time();
 
-// ---- Filters ----
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$perPage = isset($_GET['perPage']) && is_numeric($_GET['perPage']) ? max(1, intval($_GET['perPage'])) : 10;
+$offset = ($page - 1) * $perPage;
 
-// text search (title/description)
-if (isset($_GET['searchText']) && $_GET['searchText'] !== '') {
+// Filters
+if (!empty($_GET['searchText'])) {
     $searchWildcard = "%" . $_GET['searchText'] . "%";
     $whereConditions[] = "(i.title LIKE ? OR i.description LIKE ?)";
     $params[] = $searchWildcard;
@@ -31,52 +32,44 @@ if (isset($_GET['searchText']) && $_GET['searchText'] !== '') {
     $types .= "ss";
 }
 
-// price filter
 if (isset($_GET['minPrice']) && isset($_GET['maxPrice'])) {
-    $minPrice = floatval($_GET['minPrice']);
-    $maxPrice = floatval($_GET['maxPrice']);
     $whereConditions[] = "i.price BETWEEN ? AND ?";
-    $params[] = $minPrice;
-    $params[] = $maxPrice;
+    $params[] = floatval($_GET['minPrice']);
+    $params[] = floatval($_GET['maxPrice']);
     $types .= "dd";
 }
 
-// time remaining (max finish time)
-if (isset($_GET['timeRemaining']) && is_numeric($_GET['timeRemaining']) && intval($_GET['timeRemaining']) > 0) {
-    $timeRemainingHours = intval($_GET['timeRemaining']);
-    $maxFinish = $currentTimestamp + ($timeRemainingHours * 3600);
+if (!empty($_GET['timeRemaining'])) {
+    $maxFinish = $currentTimestamp + (intval($_GET['timeRemaining']) * 86400); 
     $whereConditions[] = "UNIX_TIMESTAMP(i.finish) <= ?";
     $params[] = $maxFinish;
     $types .= "i";
 }
 
-// filter out expired items
+// Always filter expired
 $whereConditions[] = "UNIX_TIMESTAMP(i.finish) >= ?";
 $params[] = $currentTimestamp;
 $types .= "i";
 
-// location match (postcode)
-if (isset($_GET['location']) && $_GET['location'] !== '') {
+if (!empty($_GET['location'])) {
     $locationWildcard = "%" . $_GET['location'] . "%";
     $whereConditions[] = "m.postcode LIKE ?";
     $params[] = $locationWildcard;
     $types .= "s";
 }
 
-// department match
-if (isset($_GET['department']) && $_GET['department'] !== '') {
-    $department = $_GET['department'];
+$validDepartments = ['Technology', 'Fashion', 'Home & Garden', 'Toys', 'Sports'];
+if (!empty($_GET['department']) && in_array($_GET['department'], $validDepartments)) {
     $whereConditions[] = "i.category = ?";
-    $params[] = $department;
+    $params[] = $_GET['department'];
     $types .= "s";
 }
 
-// free postage only
 if (isset($_GET['freePostage']) && $_GET['freePostage'] === '1') {
     $whereConditions[] = "i.postage = 0";
 }
 
-// ---- Main Query ----
+// Base SQL
 $sql = "
     SELECT 
         i.itemId, i.title, i.category, i.description, i.price, i.postage, i.start, i.finish,
@@ -95,48 +88,84 @@ $sql = "
     LEFT JOIN iBayMembers m ON i.userId = m.userId
 ";
 
-// add conditions if any
 if (!empty($whereConditions)) {
     $sql .= " WHERE " . implode(" AND ", $whereConditions);
 }
+$orderBy = "i.finish ASC"; // default
+if (!empty($_GET['sortBy'])) {
+    switch ($_GET['sortBy']) {
+        case 'price-asc':
+            $orderBy = "i.price ASC";
+            break;
+        case 'price-desc':
+            $orderBy = "i.price DESC";
+            break;
+        case 'time-asc':
+            $orderBy = "i.finish ASC";
+            break;
+        case 'bid-asc':
+            $orderBy = "(i.currentBid IS NULL) ASC, i.currentBid ASC";
+            break;
+        case 'bid-desc':
+            $orderBy = "i.currentBid DESC";
+            break;
+    }
+}
+$sql .= " ORDER BY $orderBy LIMIT ? OFFSET ?";
+$params[] = $perPage;
+$params[] = $offset;
+$types .= "ii";
 
-$sql .= " ORDER BY i.finish ASC";
-
-// prepare + bind + run
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    echo json_encode(["error" => "Prepare failed: " . $conn->error]);
+    echo json_encode(["error" => "Prepare failed."]);
     exit;
 }
-
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// format results
 $items = [];
-
 while ($row = $result->fetch_assoc()) {
-    // handle image blob
     if (!empty($row['image_data'])) {
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->buffer($row['image_data']) ?: 'image/jpeg';
         $row['image'] = 'data:' . $mimeType . ';base64,' . base64_encode($row['image_data']);
     } else {
-        $row['image'] = 'placeholder.jpg'; // fallback
+        $row['image'] = 'placeholder.jpg';
     }
-
     unset($row['image_data']);
 
-    // calculate time left in hours
     $finishTimestamp = strtotime($row['finish']);
     $row['time_remaining'] = $finishTimestamp - $currentTimestamp;
 
     $items[] = $row;
 }
+$stmt->close();
 
-echo json_encode($items);
+// Total count
+$countSql = "
+    SELECT COUNT(*) AS total
+    FROM iBayItems i
+    LEFT JOIN iBayMembers m ON i.userId = m.userId
+";
+if (!empty($whereConditions)) {
+    $countSql .= " WHERE " . implode(" AND ", $whereConditions);
+}
+$countStmt = $conn->prepare($countSql);
+$countParams = $params;
+array_splice($countParams, -2); // remove LIMIT & OFFSET
+$countTypes = substr($types, 0, -2);
+if (!empty($countParams)) {
+    $countStmt->bind_param($countTypes, ...$countParams);
+}
+$countStmt->execute();
+$totalItems = $countStmt->get_result()->fetch_assoc()['total'];
+
+echo json_encode([
+    'items' => $items,
+    'total' => $totalItems,
+    'page' => $page,
+    'perPage' => $perPage
+]);
 ?>

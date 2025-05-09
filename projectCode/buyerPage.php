@@ -36,21 +36,25 @@ $selectedCategory = $_GET['category'] ?? '';
             //auto search on page load (url category integration)
             performSearch();
             //connect search buttons with function
-            $("#search-button").on("click", performSearch);
-            $("#apply-filters").on("click", performSearch);
+            $("#apply-filters").on("click", () => performSearch(1));
+            $("#search-button").on("click", () => performSearch(1));
+            $("#sort-options").on("change", () => performSearch(1));
+            $('#items-per-page').on('change', () => performSearch(1));
             
         });
 
-        function performSearch() {
-            //select filters
+        function performSearch(page = 1) {
             const searchText = $('#search-field').val().trim();
             const [minPrice, maxPrice] = $("#price-slider").slider("values");
             const timeRemaining = $('#time-remaining').val().trim();
             const location = $('#location').val().trim();
             const department = $('#department').val().trim();
             const freePostage = $('#free-postage').is(':checked');
-            //add conditionally
-            const params = {};
+            const params = { page };
+            const sortBy = $('#sort-options').val();
+            const perPage = parseInt($('#items-per-page').val(), 10) || 10;
+            params.perPage = perPage;
+            if (sortBy) params.sortBy = sortBy;
             if (searchText) params.searchText = searchText;
             if (department) params.department = department;
             if (timeRemaining) params.timeRemaining = timeRemaining;
@@ -60,28 +64,15 @@ $selectedCategory = $_GET['category'] ?? '';
                 params.minPrice = minPrice;
                 params.maxPrice = maxPrice;
             }
-            //send ajax request
+
             $.ajax({
                 url: 'search.php',
                 type: 'GET',
                 data: params,
                 dataType: 'json',
-                success: function (items) {
-                    const sortBy = $('#sort-options').val();
-                    //sort on client side
-                    if (sortBy === "price-asc") {
-                        items.sort((a, b) => a.price - b.price);
-                    } else if (sortBy === "price-desc") {
-                        items.sort((a, b) => b.price - a.price);
-                    } else if (sortBy === "time-asc") {
-                        items.sort((a, b) => a.time_remaining - b.time_remaining);
-                    } else if (sortBy === "bid-desc") {
-                        items.sort((a, b) => (b.currentBid ?? b.price) - (a.currentBid ?? a.price));
-                    } else if (sortBy === "bid-asc") {
-                        items.sort((a, b) => (a.currentBid ?? a.price) - (b.currentBid ?? b.price));
-                    }
-                    //render results
-                    displayResults(items);
+                success: function (data) {
+                    displayResults(data.items);
+                    renderPagination(data.page, data.total, data.perPage);
                 },
                 error: function (xhr, status, error) {
                     console.error("AJAX Error:", error);
@@ -150,6 +141,29 @@ $selectedCategory = $_GET['category'] ?? '';
     else result += ' left';
 
     return result;
+    }
+    let currentPage = 1;
+
+    function fetchItems(page = 1) {
+        fetch(`your_php_file.php?page=${page}`)
+            .then(res => res.json())
+            .then(data => {
+                renderItems(data.items);
+                renderPagination(data.page, data.total, data.perPage);
+            });
+    }
+    function renderPagination(currentPage, totalItems, perPage) {
+    const totalPages = Math.ceil(totalItems / perPage);
+    const container = document.getElementById("pagination-container");
+    container.innerHTML = '';
+
+    for (let page = 1; page <= totalPages; page++) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) btn.disabled = true;
+        btn.addEventListener('click', () => performSearch(page));
+        container.appendChild(btn);
+    }
 }
     </script>
 </head>
@@ -170,8 +184,15 @@ $selectedCategory = $_GET['category'] ?? '';
             <div class="logo">
                 <a href="index.php"><img src="iBay-logo.png" class="img"></a>
             </div>
-            <div class="search-options">
+            <div class="search-options" >
                 <h3>Advanced Search</h3>
+                <label for="items-per-page">Items per page:</label>
+                <select id="items-per-page" style="margin-bottom: 15px;">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
                 <!-- Sort dropdown -->
                 <select id="sort-options" class="sort-dropdown">
                     <option value="">Sort By</option>
@@ -199,8 +220,8 @@ $selectedCategory = $_GET['category'] ?? '';
                 <div id="price-slider"></div>
 
                 <!-- Time remaining filter -->
-                <label for="time-remaining">Time Remaining (hours)</label>
-                <input type="number" id="time-remaining" min="1" placeholder="Enter hours" class="time-box">
+                <label for="time-remaining">Time Remaining (days)</label>
+                <input type="number" id="time-remaining" placeholder="Days remaining" min="1" class="time-box">
 
                 <!-- Location filter -->
                 <label for="location">Postcode</label>
@@ -219,8 +240,10 @@ $selectedCategory = $_GET['category'] ?? '';
                 <input type="text" id="search-field" class="search-bar" placeholder="Search field">
                 <button id="search-button">Search</button>
             </div>
+            <div id="pagination-container" class="pagination"></div>
         </div>
     </div>
+    
     <!-- FOOTER -->        
     <div class="footer">
         Copyright @2025-25 iBay Inc. All rights reserved

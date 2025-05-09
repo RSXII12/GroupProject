@@ -175,8 +175,8 @@ $itemId = $_GET['id'] ?? '';
 	
 	    // Display location and map
 	    echo '<div class="location-box">';
-	    echo '<h4>Item Location:</h4>';
-	    echo '<p>' . htmlspecialchars($row['location']) . '</p>';
+	    echo '<p style="font-size: 18px; font-weight: bold;">Item Location:</p>';
+	    echo '<p id="postcode-label"></p>';
 	    echo '<div id="map" style="height: 200px; width: 100%;"></div>';
 	    echo '</div>';
 
@@ -187,6 +187,8 @@ $itemId = $_GET['id'] ?? '';
 </div>
 
 <script>
+
+// Map Function
 document.addEventListener('DOMContentLoaded', () => {
   const postcode = <?php echo json_encode($location); ?>;
 
@@ -204,15 +206,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }).addTo(map);
 
         L.marker([lat, lon]).addTo(map)
+	document.getElementById('postcode-label').innerText = `${postcode}`;
       } else {
-        document.getElementById('map').innerHTML = 'Location not available';
+	// if null then display error message
+        document.getElementById('map').innerHTML = '<p style="color: purple;">Location not available</p>';
       }
     })
     .catch(() => {
-      document.getElementById('map').innerText = 'Location not available';
+	// if postcode invalid only shows error message, not postcode as well 
+    	document.getElementById('postcode-label').innerText = 'Location not available';
     });
 });
 
+
+// Carousel Function
 document.addEventListener('DOMContentLoaded', function () {
     let images = document.querySelectorAll('.carousel-image');
     let currentIndex = 0;

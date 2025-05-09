@@ -40,8 +40,9 @@
 
             <!-- description -->
             <div class="form-group">
-                <label for="description">Item Description</label>
+                <label for="description">Item Description (max 1000 characters)</label>
                 <textarea id="description" name="description" rows="4"></textarea>
+                <div id="desc-counter">0 / 1000</div>
             </div>
 
             <!-- price + postage -->
@@ -108,7 +109,18 @@
                 reader.readAsDataURL(file);
             });
         });
+        document.addEventListener("DOMContentLoaded", () => {
+            const deadlineInput = document.getElementById("deadline");
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // handle timezone offset
+            deadlineInput.min = now.toISOString().slice(0,16);
+        });
+        const descInput = document.getElementById('description');
+        const descCounter = document.getElementById('desc-counter');
 
+        descInput.addEventListener('input', () => {
+            descCounter.textContent = `${descInput.value.length} / 1000`;
+        });
         // client-side validation setup
         const form = document.getElementById('listing-form');
         const fields = {
@@ -128,10 +140,15 @@
                 validate: val => !isNaN(val) && val >= 0
             },
             'deadline': {
-                el: document.getElementById('deadline'),
-                error: document.getElementById('deadlineError'),
-                validate: val => val !== ""
+            el: document.getElementById('deadline'),
+            error: document.getElementById('deadlineError'),
+            validate: val => {
+                const selectedTime = new Date(val).getTime();
+                const now = new Date().getTime();
+                return val !== "" && selectedTime > now;
             }
+        }
+            
         };
 
         // live field checks

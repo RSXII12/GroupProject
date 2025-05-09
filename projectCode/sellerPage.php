@@ -59,7 +59,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!$listingDeadline || $listingDeadline < time()) {
             throw new Exception("Deadline must be a valid future date and time.");
         }
-
+        //validate description length
+        if (strlen($listingDescription) > 1000) {
+            throw new Exception("Description must not exceed 1000 characters.");
+        }
         // Validate uploaded images
         $maxFileSize = 5 * 1024 * 1024; // 5 MB max
         if (!empty($listingPhotos['name'][0])) {

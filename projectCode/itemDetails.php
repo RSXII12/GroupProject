@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('postcode-label').innerText = `${postcode}`;
       } else {
 	// if null then display error message
-        document.getElementById('map').innerHTML = '<p style="color: purple;">Location not available</p>';
+        document.getElementById('map').innerHTML = '<p>Location not available</p>';
       }
     })
     .catch(() => {

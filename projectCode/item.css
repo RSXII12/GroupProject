@@ -56,13 +56,15 @@ p {
 /* Image Gallery */
 .image-gallery {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 15px;
-    margin: 20px 0;
+    width: 350px;
+    flex-shrink: 0;
+    align-items: center;
 }
 
 .image-gallery img {
-    width: 200px;
+    width: 100%;
     height: auto;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -72,6 +74,75 @@ p {
 
 .image-gallery img:hover {
     transform: scale(1.03);
+}
+
+.image-block {
+    position: relative;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.carousel-image {
+    display: none;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.carousel-image.active {
+    display: block;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(185, 185, 185, 0.5);
+    border: none;
+    color: white;
+    font-size: 24px;
+    padding: 10px 15px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.carousel-btn.prev {
+    left: 0;
+}
+
+.carousel-btn.next {
+    right: 0;
+}
+
+/* Item and Item Info Container */
+.item-details-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+}
+
+
+.item-info { 
+    flex: 1;
+    max-width: 400px;
+    text-align: left;
+}
+
+/* Location and Map*/
+.location-box {
+    text-align: center;
+    width: 100%;
+    margin-top: 20px;
+    z-index: -1;
 }
 
 /* Messages (Success or Error) */
@@ -149,28 +220,32 @@ a:hover {
         justify-content: center;
     }
 
+    .item-details-container {
+	flex-direction: column;
+	align-items: center;
+    }
+
+
     form {
         width: 100%;
     }
 }
 .main-content {
     flex: 1;
-    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow-y: auto;
     text-align: center;
-    
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .main-content > * {
     max-width: 800px;
-    width: 100%;
-
-
-
 }
+
+
 .footer {
     background: #2f64ad;
     color: white;

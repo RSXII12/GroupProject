@@ -124,9 +124,11 @@ $itemId = $_GET['id'] ?? '';
 		$activeClass = $index === 0 ? 'active' : '';
     		echo "<img src=\"$imageSrc\" class=\"carousel-image $activeClass\" alt=\"Item Image\">";
 	    }
-
+		    
+	    if (count($images) == 2) {
 	    echo '<button class="carousel-btn prev">&#10094;</button>';
 	    echo '<button class="carousel-btn next">&#10095;</button>';
+	    }
 
 	    echo'</div>'; // close image-block
 

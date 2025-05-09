@@ -156,8 +156,8 @@ $selectedCategory = $_GET['category'] ?? '';
     <div class="container">
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <div class="logo" style="text-align: center; margin-bottom: 20px;">
-                <a href="index.php"><img src="iBay-logo.png" style="max-width: 150px; height: auto;"></a>
+            <div class="logo">
+                <a href="index.php"><img src="iBay-logo.png" class="img"></a>
             </div>
             <div class="search-options">
                 <h3>Advanced Search</h3>
@@ -173,7 +173,7 @@ $selectedCategory = $_GET['category'] ?? '';
 
                 <!-- Department filter -->
                 <label for="department">Department</label>
-                <select id="department" name="department">
+                <select id="department" name="department" class ="id-dropdown">
                     <option value="">Select a department</option>
                     <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
                     <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
@@ -184,20 +184,20 @@ $selectedCategory = $_GET['category'] ?? '';
 
                 <!-- Price Range -->
                 <label for="price-range">Starting Price:</label>
-                <input type="text" id="price-range" readonly style="border:0;">
+                <input type="text" id="price-range" readonly style="border:0;width:95%">
                 <div id="price-slider"></div>
 
                 <!-- Time remaining filter -->
                 <label for="time-remaining">Time Remaining (hours)</label>
-                <input type="number" id="time-remaining" min="1" placeholder="Enter hours">
+                <input type="number" id="time-remaining" min="1" placeholder="Enter hours" class="time-box">
 
                 <!-- Location filter -->
-                <label for="location">Location</label>
-                <input type="text" id="location" placeholder="Enter location">
+                <label for="location">Postcode</label>
+                <input type="text" id="location" placeholder="Enter location" class ="postcode-box">
 
                 <!-- Free postage toggle -->
                 <label>
-                    <input type="checkbox" id="free-postage"> Free Postage Only
+                    <input type="checkbox" id="free-postage"> Free Postage
                 </label>
                 <button id="apply-filters">Apply Filters</button>
             </div>

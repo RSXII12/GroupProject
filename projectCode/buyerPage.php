@@ -171,7 +171,7 @@ $selectedCategory = $_GET['category'] ?? '';
     <!--Header-->
     <div class="header">
         <?php if ($isLoggedIn): ?>
-            <span>Welcome! <a href="logout.php">Log out</a></span>
+            <span>Welcome! <a href="logout.php">Log out</a>      <a href="main-G06.php">view my listings</a></span>
         <?php else: ?>
             <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
         <?php endif; ?>

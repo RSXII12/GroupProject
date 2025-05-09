@@ -133,7 +133,7 @@ while ($row = $result->fetch_assoc()) {
 
     // calculate time left in hours
     $finishTimestamp = strtotime($row['finish']);
-    $row['time_remaining'] = round(($finishTimestamp - $currentTimestamp) / 3600);
+    $row['time_remaining'] = $finishTimestamp - $currentTimestamp;
 
     $items[] = $row;
 }

@@ -105,41 +105,52 @@ $selectedCategory = $_GET['category'] ?? '';
             } else {
                 //render itemCards
                 items.forEach(item => {
+                    const descriptionHTML = item.description
+                ? `<div class="description">${item.description}</div>`
+                : '';
                     html += `
                         <div class="result-card">
-                            <a href="itemDetails.php?id=${item.itemId}" class="result-link">
-                                <div class="image-container">
-                                    <img src="${item.image}" alt="${item.title}">
-                                </div>
-                                <div class="content">
-                                    <h4>${item.title}</h4>
-                                    <p class="category"><strong>Department:</strong> ${item.category}</p>
-                                    <p class="time-remaining"><strong>Time remaining:</strong> ${formatTime(item.time_remaining * 3600)}</p>
-                                    <p class="price">
-                                        <strong>Starting Price:</strong> £${item.price} <br>
-                                        <strong>Current Bid:</strong> £${item.currentBid ?? item.price} (+ £${item.postage} postage)
-                                    </p>
-                                    <p class="location"><strong>Location:</strong> ${item.location}</p>
-                                </div>
+                        <img src="${item.image}" alt="Item Image" />
+                        <div class="card-content">
+                            <a href="itemDetails.php?id=${item.itemId}">
+                                <h4>${item.title}</h4>
                             </a>
+                            <div class="card-details">
+                            <div class="left-info">
+                                <div class="price">Starting Price: £${item.price}</div>
+                                <div class="bid"> Current Bid: £${item.currentBid ?? item.price}</div>
+                                <div class = "postage">Postage: £${item.postage}</div>
+                                <div class="location">Postcode: ${item.location}</div>
+                                <div class="category">Category: ${item.category}</div>
+                                <div class="time-remaining">Time remaining: ${formatTime(item.time_remaining)}</div>
+                            </div>
+                            ${descriptionHTML}
+                            </div>
+                        </div>
                         </div>
                     `;
                 });
             }
+                        
 
             resultsDiv.innerHTML = html;
             container.appendChild(resultsDiv);
         }
 
-        function formatTime(seconds) {
-            const days = Math.floor(seconds / (3600 * 24));
-            seconds %= 3600 * 24;
-            const hours = Math.floor(seconds / 3600);
-            seconds %= 3600;
-            const minutes = Math.floor(seconds / 60);
-            seconds = Math.floor(seconds % 60);
-            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-        }
+        function formatTime(secondsLeft) {
+    const days = Math.floor(secondsLeft / 86400);
+    const hours = Math.floor((secondsLeft % 86400) / 3600);
+    const minutes = Math.floor((secondsLeft % 3600) / 60);
+
+    let result = '';
+    if (days > 0) result += `${days}d `;
+    if (hours > 0 || days > 0) result += `${hours}h `;
+    if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m`;
+    if (result === '') result = 'Less than 1m left';
+    else result += ' left';
+
+    return result;
+}
     </script>
 </head>
 <body>

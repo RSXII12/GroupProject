@@ -207,7 +207,7 @@ $mysqli->close();
     <div class="header-left">
       <a href="index.php"><img src="iBay-logo.png" alt="iBay logo"></a>
     </div>
-    <div class="header-center">iBay</div>
+    <div class="header-center"></div>
     <div class="header-right"></div>
   </div>
 
@@ -234,6 +234,8 @@ $mysqli->close();
         <p><strong>Postage:</strong> £<?php echo number_format($item['postage'],2); ?></p>
         <p><strong>Start Time:</strong> <?php echo htmlspecialchars($item['start']); ?></p>
         <p><strong>Auction Ends:</strong> <?php echo htmlspecialchars($item['finish']); ?></p>
+        <p><strong>Description:</strong><br> <?php echo nl2br(htmlspecialchars($item['description'])); ?> </p>
+
 
         <form class="bid" method="post" action="placeBid.php">
           <label for="bid">Enter your bid (£):</label>
@@ -241,10 +243,7 @@ $mysqli->close();
           <input type="hidden" name="itemId" value="<?php echo htmlspecialchars($itemId); ?>">
           <button type="submit">Place Bid</button>
         </form>
-
-        <p><strong>Description:</strong><br>
-          <?php echo nl2br(htmlspecialchars($item['description'])); ?>
-        </p>
+        
         <p><strong>Item Location:</strong> <?php echo htmlspecialchars($postcode); ?></p>
       </div>
     </div>
@@ -279,29 +278,52 @@ $mysqli->close();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // disable self-bidding
-      const form = document.querySelector('form.bid');
-      if (USER_ID && USER_ID === SELLER_ID) {
-        form.querySelector('input[name="bid"]').disabled = true;
-        form.querySelector('button[type="submit"]').disabled = true;
-        const note = document.createElement('p');
-        note.textContent = "You cannot bid on your own listing.";
-        note.style.color = "red";
-        form.parentNode.insertBefore(note, form);
-        return;
-      }
+        const form = document.querySelector('form.bid');
+        if (!form) return;
 
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const bidStr = this.bid.value.trim();
-        const moneyRE = /^(\d+)(\.\d{1,2})?$/;
-        if (!moneyRE.test(bidStr)) return showError("Enter a non-negative amount with max two decimals.");
-        const bidVal = parseFloat(bidStr);
-        if (bidVal < 0) return showError("Your bid cannot be negative.");
-        if (new Date() > FINISH_TIME) return showError("Auction has ended.");
-        const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
-        if (bidVal < minAllowed) return showError(`Bid must be at least £${minAllowed.toFixed(2)}.`);
-        this.submit();
+        // 1) not signed in?
+        if (!USER_ID) {
+          form.querySelector('input[name="bid"]').disabled = true;
+          form.querySelector('button[type="submit"]').disabled = true;
+          const note = document.createElement('p');
+          note.innerHTML = 'Please <a href="sellerLogin.html">log in</a> to place a bid.';
+          note.style.color = 'red';
+          form.parentNode.insertBefore(note, form);
+          return;
+        }
+
+        // 2) no self-bidding
+        if (USER_ID === SELLER_ID) {
+          form.querySelector('input[name="bid"]').disabled = true;
+          form.querySelector('button[type="submit"]').disabled = true;
+          const note = document.createElement('p');
+          note.textContent = "You cannot bid on your own listing.";
+          note.style.color = "red";
+          form.parentNode.insertBefore(note, form);
+          return;
+        }
+
+        // 3) all the other validations on submit
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const bidStr = this.bid.value.trim();
+          const moneyRE = /^(\d+)(\.\d{1,2})?$/;
+          if (!moneyRE.test(bidStr)) {
+            return showError("Enter a non-negative amount with up to two decimals.");
+          }
+          const bidVal = parseFloat(bidStr);
+          if (bidVal < 0) {
+            return showError("Your bid cannot be negative.");
+          }
+          if (new Date() > FINISH_TIME) {
+            return showError("The auction has already ended.");
+          }
+          const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
+          if (bidVal < minAllowed) {
+            return showError(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
+          }
+          this.submit();
+        });
       });
 
       // LIGHTBOX
@@ -357,7 +379,7 @@ $mysqli->close();
         })
         .catch(console.error);
       })();
-    });
+    
   </script>
 </body>
 </html>

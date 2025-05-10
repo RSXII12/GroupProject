@@ -170,12 +170,15 @@ $selectedCategory = $_GET['category'] ?? '';
 <body>
     <!--Header-->
     <div class="header">
-        <?php if ($isLoggedIn): ?>
-            <span>Welcome! <a href="logout.php">Log out</a>      <a href="listingPage.php">view my listings</a></span>
-        <?php else: ?>
-            <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
-        <?php endif; ?>
-        <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
+    <?php if ($isLoggedIn): ?>
+        <span>You are logged in as <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>. 
+            <a href="logout.php">Log out</a> | 
+            <a href="listingPage.php">View My Listings</a>
+        </span>
+    <?php else: ?>
+        <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
+    <?php endif; ?>
+    <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
     </div>
     <!-- MAIN LAYOUT -->        
     <div class="container">

@@ -1,254 +1,350 @@
 <?php
-session_start(); // Start session to access login info
+session_start();
 
-// DB connection setup
+// get id from header
+if (!isset($_GET['id']) || !preg_match('/^[a-z0-9]+$/i', $_GET['id'])) {
+    die("Invalid item ID.");
+}
+$itemId = $_GET['id'];
+
+
 $servername = "sci-project.lboro.ac.uk";
-$username = "295group6";
-$password = "wHiuTatMrdizq3JfNeAH";
-$dbname = "295group6";
+$username   = "295group6";
+$password   = "wHiuTatMrdizq3JfNeAH";
+$dbname     = "295group6";
 
-// Connect to MySQL
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$mysqli = new mysqli($servername, $username, $password, $dbname);
+if ($mysqli->connect_error) {
+    die("DB connection failed: " . $mysqli->connect_error);
 }
 
-// Get item ID from URL (e.g. itemDetails.php?id=abc123)
-$itemId = $_GET['id'] ?? '';
+//  fetch item
+$stmt = $mysqli->prepare("
+    SELECT userId, title, category, description, price, postage, start, finish, currentBid
+    FROM iBayItems
+    WHERE itemId = ?
+");
+$stmt->bind_param('s', $itemId);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res->num_rows === 0) {
+    die("Item not found.");
+}
+$item = $res->fetch_assoc();
+$stmt->close();
+
+//  fetch seller postcode
+$stmt = $mysqli->prepare("
+    SELECT postcode
+    FROM iBayMembers
+    WHERE userId = ?
+");
+$stmt->bind_param('s', $item['userId']);
+$stmt->execute();
+$res = $stmt->get_result();
+$member   = $res->fetch_assoc();
+$postcode = $member['postcode'] ?? '';
+$stmt->close();
+
+//  fetch images
+$stmt = $mysqli->prepare("
+    SELECT image
+    FROM iBayImages
+    WHERE itemId = ?
+    ORDER BY number
+");
+$stmt->bind_param('s', $itemId);
+$stmt->execute();
+$res = $stmt->get_result();
+$images = [];
+while ($row = $res->fetch_assoc()) {
+    $images[] = 'data:image/jpeg;base64,' . base64_encode($row['image']);
+}
+$stmt->close();
+$mysqli->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Item Details</title>
-    <link rel="stylesheet" href="item.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><?php echo htmlspecialchars($item['title']); ?></title>
+
+  <!-- Leaflet CSS for map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+  <style>
+   
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    html { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+    body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;            
+    overflow-x: hidden;       
+    margin: 0;
+    }
+
+    
+    .header {
+      background-color: #0056b3;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      flex: 0 0 auto;
+    }
+    .header-left,
+    .header-center,
+    .header-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-left { justify-content: flex-start; padding-left: 3%; }
+    .header-right { justify-content: flex-end; padding-right: 3%; }
+    .header-left img {
+      width: 30%;
+      height: auto;
+      object-fit: cover;
+    }
+
+    .footer {
+      background: #2f64ad;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      flex: 0 0 auto;
+    }
+
+    
+    main.page-content {
+    flex: 1 1 auto;           
+    overflow-y: auto;         
+    max-width: 1000px;        
+    margin: 0 auto;
+    padding: 1em;
+    
+    }
+
+    .flex {
+      display: flex;
+      gap: 2em;
+    }
+    @media (max-width: 768px) {
+      .flex { flex-direction: column; }
+    }
+
+    
+    .images {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+    .slide {
+      display: none;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+    .slide.active { display: block; }
+    .slide img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .images button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: #fff;
+      padding: 0.5em 1em;
+      cursor: pointer;
+    }
+    .images .prev { left: 0.5em; }
+    .images .next { right: 0.5em; }
+
+    
+    .details {
+      flex: 1;
+    }
+    .details p { margin: 0.5em 0; }
+    form.bid {
+      margin: 1em 0;
+      padding: 0.5em;
+      border: 1px solid #888;
+      display: inline-block;
+    }
+    form.bid input[type="text"] { width: 8em; }
+
+    
+    #map {
+    width: 100%;              
+    height: 300px;
+    border: 1px solid #999;
+    margin-top: 1em;
+    }
+  </style>
 </head>
 <body>
-
-<!-- Header -->
-<div class="header">
+  <!-- HEADER -->
+  <div class="header">
     <div class="header-left">
-        <a href="index.php"><img src="iBay-logo.png" alt="iBay logo"></a>
+      <a href="index.php"><img src="iBay-logo.png" alt="iBay logo"></a>
     </div>
     <div class="header-center"></div>
     <div class="header-right"></div>
-</div>
+  </div>
 
-<!-- Main container -->
-<div class="container">
-    <div class="main-content">
-        <?php
-        if (!empty($itemId)) {
-            // Fetch item details
-            $stmt = $conn->prepare("SELECT i.itemId, i.userId, i.title, i.description, i.price, 
-	    i.currentBid, i.bidUser, i.category, i.postage, i.start, i.finish, m.postcode AS location 
-                FROM iBayItems i
-                LEFT JOIN iBayMembers m ON i.userId = m.userId
-                WHERE itemId = ?");
-	    $stmt->bind_param("s", $itemId);
-            $stmt->execute();
-            $result = $stmt->get_result();
+  <!-- MAIN -->
+  <main class="page-content">
+    <div class="flex">
+      <!-- IMAGE SLIDER -->
+      <div class="images">
+        <?php foreach($images as $i => $src): ?>
+          <div class="slide<?php echo $i===0 ? ' active' : ''; ?>">
+            <img src="<?php echo $src; ?>" alt="Item image <?php echo $i+1; ?>">
+          </div>
+        <?php endforeach; ?>
+        <button class="prev">&larr;</button>
+        <button class="next">&rarr;</button>
+      </div>
 
-            if ($row = $result->fetch_assoc()) {
-                // Get user info
-	        $location = $row['location'];
-                $sellerId = $row['userId'];
-                $loggedIn = isset($_SESSION['userId']);
-                $currentUserId = $loggedIn ? $_SESSION['userId'] : null;
+      <!-- DETAILS -->
+      <div class="details">
+        <h1><?php echo htmlspecialchars($item['title']); ?></h1>
+        <p><strong>Category:</strong> <?php echo htmlspecialchars($item['category']); ?></p>
+        <p><strong>Starting Price:</strong> £<?php echo number_format($item['price'],2); ?></p>
+        <p><strong>Current Bid:</strong> £<?php echo number_format($item['currentBid'],2); ?></p>
+        <p><strong>Postage:</strong> £<?php echo number_format($item['postage'],2); ?></p>
+        <p><strong>Start Time:</strong> <?php echo htmlspecialchars($item['start']); ?></p>
+        <p><strong>Auction Ends:</strong> <?php echo htmlspecialchars($item['finish']); ?></p>
 
-                // Handle bid submission (if user posted a bid)
-                if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['bidAmount'])) {
-                    // Redirect if not logged in
-                    if (!$loggedIn) {
-                        header("Location: sellerLogin.html");
-                        exit;
-                    }
+        <form class="bid" method="post" action="placeBid.php">
+          <label for="bid">Enter your bid (£):</label>
+          <input type="text" name="bid" id="bid" required>
+          <input type="hidden" name="itemId" value="<?php echo htmlspecialchars($itemId); ?>">
+          <button type="submit">Place Bid</button>
+        </form>
 
-                    // Prevent seller from bidding on their own listing
-                    if ($currentUserId === $sellerId) {
-                        echo "<p class='error'>You cannot bid on your own item.</p>";
-                    } else {
-                        // Get price info
-                        $startingPrice = floatval($row['price']);
-                        $currentBid = floatval($row['currentBid']);
-                        $bidAmount = floatval($_POST['bidAmount']);
-
-                        // Determine minimum allowed bid
-                        $minBid = max($startingPrice + 0.01, $currentBid + 0.01);
-
-                        // Reject bid if too low
-                        if ($bidAmount < $minBid) {
-                            echo "<p class='error'>Your bid must be at least Â£" . number_format($minBid, 2) . "</p>";
-                        } else {
-                            // Update bid in the database
-                            $update = $conn->prepare("
-                                UPDATE iBayItems SET currentBid = ?, bidUser = ? WHERE itemId = ?
-                            ");
-                            $update->bind_param("dss", $bidAmount, $currentUserId, $itemId);
-                            if ($update->execute()) {
-                                echo "<p class='success'>Bid of Â£" . number_format($bidAmount, 2) . " placed!</p>";
-                                $row['currentBid'] = $bidAmount; // update displayed bid
-                                $row['bidUser'] = $currentUserId;
-                            } else {
-                                echo "<p class='error'>Bid failed: " . $conn->error . "</p>";
-                            }
-                            $update->close();
-                        }
-                    }
-                }
-	    
-	    // Load item images
-            $imgStmt = $conn->prepare("SELECT image FROM iBayImages WHERE itemId = ? ORDER BY number ASC");
-            $imgStmt->bind_param("s", $itemId);
-            $imgStmt->execute();
-            $imgResult = $imgStmt->get_result();
-
-	    $imgStmt->close();
-
-
-	    echo '<div class="item-details-container">';
-	    
-	    // Output images
-            echo '<div class="image-gallery">';
-	    echo '<div class="image-block">';
-	    $images = [];
-
-            while ($imgRow = $imgResult->fetch_assoc()) {
-                $imageData = base64_encode($imgRow['image']);
-		$images[] = 'data:image/jpeg;base64,' . $imageData;
-            }
-
-	    foreach ($images as $index => $imageSrc) {
-		$activeClass = $index === 0 ? 'active' : '';
-    		echo "<img src=\"$imageSrc\" class=\"carousel-image $activeClass\" alt=\"Item Image\">";
-	    }
-		    
-	    if (count($images) == 2) {
-	    echo '<button class="carousel-btn prev">&#10094;</button>';
-	    echo '<button class="carousel-btn next">&#10095;</button>';
-	    }
-
-	    echo'</div>'; // close image-block
-
-	    echo '<p class="item-desc"><strong>Description:</strong> ' . '<br>' . nl2br(htmlspecialchars($row['description'])) . '</p>';
-	    
-
-	    echo '</div>'; // close image-gallery
-
-
-                // Display item info
-	        echo '<div class="item-info">';
-                echo "<h2>" . htmlspecialchars($row['title']) . "</h2>";
-                echo "<p><strong>Category:</strong> " . htmlspecialchars($row['category']) . "</p>";
-                echo "<p><strong>Starting Price:</strong> £" . number_format($row['price'], 2) . "</p>";
-                echo "<p><strong>Current Bid:</strong> £" . number_format($row['currentBid'] ?: $row['price'], 2) . "</p>";
-                echo "<p><strong>Postage:</strong> £" . number_format($row['postage'], 2) . "</p>";
-                echo "<p><strong>Start Time:</strong> " . htmlspecialchars($row['start']) . "</p>";
-                echo "<p><strong>Auction Ends:</strong> " . htmlspecialchars($row['finish']) . "</p>";
-
-                
-                // Show bid form (if user is not the seller)
-                if (!$loggedIn) {
-                    echo "<p><a href='sellerLogin.html'>Log in</a> to place a bid.</p>";
-                } elseif ($currentUserId !== $sellerId) {
-                    $startingPrice = floatval($row['price']);
-                    $currentBid = floatval($row['currentBid']);
-                    $minBid = max($startingPrice + 0.01, $currentBid + 0.01);
-
-                    echo '<form action="" method="POST">';
-                    echo '<label for="bidAmount"><strong>Enter your bid (Â£):</strong></label><br>';
-                    echo '<input type="text" name="bidAmount" required pattern="^\d+(\.\d{1,2})?$" title="Enter a valid amount (e.g. 10 or 10.99)"><br>';
-                    echo '<button type="submit">Place Bid</button>';
-                    echo '</form>';
-                }
-            } else {
-                echo "<p>Item not found.</p>";
-            }
-
-            $stmt->close();
-        } else {
-            echo "<p>Invalid item ID.</p>";
-        }
-	    echo '</div>'; // close item info
-
-	    echo '</div>'; // close item details container
-	
-	    // Display location and map
-	    echo '<div class="location-box">';
-	    echo '<p style="font-size: 18px; font-weight: bold;">Item Location:</p>';
-	    echo '<p id="postcode-label"></p>';
-	    echo '<div id="map" style="height: 200px; width: 100%;"></div>';
-	    echo '</div>';
-
-
-        $conn->close(); // cleanup
-        ?>
+        <p><strong>Description:</strong><br>
+           <?php echo nl2br(htmlspecialchars($item['description'])); ?>
+        </p>
+        <p><strong>Item Location:</strong> <?php echo htmlspecialchars($postcode); ?></p>
+      </div>
     </div>
-</div>
 
-<script>
+    <!-- MAP -->
+    <div id="map"></div>
+  </main>
 
-// Map Function
-document.addEventListener('DOMContentLoaded', () => {
-  const postcode = <?php echo json_encode($location); ?>;
+  <!-- FOOTER -->
+  <div class="footer">
+    Copyright &copy; 2025 iBay Inc. All rights reserved
+  </div>
 
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(postcode)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (postcode !== null) {
-        const lat = data[0].lat;
-        const lon = data[0].lon;
+  <!-- SCRIPTS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // — BID VALIDATION —
+    const USER_ID     = "<?php echo addslashes($_SESSION['userId'] ?? ''); ?>";
+    const SELLER_ID   = "<?php echo addslashes($item['userId']); ?>";
+    const START_PRICE = <?php echo json_encode((float)$item['price']); ?>;
+    const CURRENT_BID = <?php echo json_encode((float)$item['currentBid']); ?>;
+    const FINISH_TIME = new Date("<?php echo $item['finish']; ?>");
 
-        const map = L.map('map').setView([lat, lon], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.marker([lat, lon]).addTo(map)
-	document.getElementById('postcode-label').innerText = `${postcode}`;
-      } else {
-	// if null then display error message
-        document.getElementById('map').innerHTML = '<p>Location not available</p>';
-      }
-    })
-    .catch(() => {
-	// if postcode invalid only shows error message, not postcode as well 
-    	document.getElementById('postcode-label').innerText = 'Location not available';
-    });
-});
-
-
-// Carousel Function
-document.addEventListener('DOMContentLoaded', function () {
-    let images = document.querySelectorAll('.carousel-image');
-    let currentIndex = 0;
-
-    function showImage(index) {
-        images.forEach((img, i) => {
-            img.classList.toggle('active', i === index);
-        });
+    function showError(msg) {
+      alert(msg);
     }
 
-    document.querySelector('.carousel-btn.prev').addEventListener('click', function () {
-        currentIndex = (currentIndex - 1 + images.length) % images.length;
-        showImage(currentIndex);
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.querySelector('form.bid');
+      if (!form) return;
+
+      if (USER_ID && USER_ID === SELLER_ID) {
+        form.querySelector('input[name="bid"]').disabled = true;
+        form.querySelector('button[type="submit"]').disabled = true;
+        const note = document.createElement('p');
+        note.textContent = "You cannot bid on your own listing.";
+        note.style.color = "red";
+        form.parentNode.insertBefore(note, form);
+        return;
+      }
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const bidStr = this.bid.value.trim();
+        const moneyRE = /^(\d+)(\.\d{1,2})?$/;
+
+        if (!moneyRE.test(bidStr)) {
+          return showError("Please enter a non-negative amount, up to two decimal places.");
+        }
+        const bidVal = parseFloat(bidStr);
+        if (bidVal < 0) {
+          return showError("Your bid cannot be negative.");
+        }
+        if (new Date() > FINISH_TIME) {
+          return showError("The auction has already ended.");
+        }
+        const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
+        if (bidVal < minAllowed) {
+          return showError(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
+        }
+        this.submit();
+      });
     });
 
-    document.querySelector('.carousel-btn.next').addEventListener('click', function () {
-        currentIndex = (currentIndex + 1) % images.length;
-        showImage(currentIndex);
-    });
+    // — IMAGE SLIDER —
+    (() => {
+      const slides = document.querySelectorAll('.slide');
+      let idx = 0;
+      document.querySelector('.next').onclick = () => {
+        slides[idx].classList.remove('active');
+        idx = (idx + 1) % slides.length;
+        slides[idx].classList.add('active');
+      };
+      document.querySelector('.prev').onclick = () => {
+        slides[idx].classList.remove('active');
+        idx = (idx - 1 + slides.length) % slides.length;
+        slides[idx].classList.add('active');
+      };
+    })();
 
-    showImage(currentIndex);
-});
-</script>
-
-<!-- Footer -->
-<div class="footer">
-    Copyright @2025-25 iBay Inc. All rights reserved
-</div>
+    // — MAP & GEOCODING —
+    (() => {
+      const postcode = "<?php echo addslashes($postcode); ?>";
+      fetch(
+        'https://nominatim.openstreetmap.org/search' +
+        '?format=json&postalcode=' + encodeURIComponent(postcode) +
+        '&countrycodes=gb'
+      )
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) return;
+        const lat = parseFloat(data[0].lat),
+              lon = parseFloat(data[0].lon);
+        const map = L.map('map').setView([lat,lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+          maxZoom: 19
+        }).addTo(map);
+        L.marker([lat,lon]).addTo(map);
+        L.circle([lat,lon], { radius: 1000 }).addTo(map);
+      })
+      .catch(console.error);
+    })();
+  </script>
 </body>
 </html>

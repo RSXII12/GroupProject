@@ -15,7 +15,7 @@ $now = date('Y-m-d H:i:s');
 
 // Random but consistent daily picks: join image and limit to 16
 $sql = "
-    SELECT i.itemId, i.title, i.price, img.image
+    SELECT i.itemId, i.title, i.price, i.currentBid, img.image
     FROM iBayItems i
     LEFT JOIN (
         SELECT itemId, image
@@ -37,7 +37,7 @@ if ($result->num_rows > 0) {
         $itemId = htmlspecialchars($row["itemId"]);
         $title = htmlspecialchars($row["title"]);
         $price = htmlspecialchars($row["price"]);
-
+        $currentBid = isset($row["currentBid"]) ? htmlspecialchars($row["currentBid"]) : null;
         echo '<a href="itemDetails.php?id=' . $itemId . '" class="item-link">';
         echo '<div class="item-container">';
 
@@ -52,7 +52,12 @@ if ($result->num_rows > 0) {
         echo '</div>';
 
         echo '<h3>' . $title . '</h3>';
-        echo '<p>Price: £' . $price . '</p>';
+        echo '<p>Starting price: £' . $price . '</p>';
+        if ($currentBid !== null) {
+            echo '<p>Current Bid: £' . $currentBid . '</p>';
+        } else {
+            echo '<p class="no-bid">No bids yet</p>';
+        }
 
         echo '</div>';
         echo '</a>';

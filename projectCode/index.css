@@ -178,7 +178,7 @@ body {
     text-align: center;
     padding: 10px;
     font-size: 12px;
-    position: absolute;
+    position: sticky;
     bottom: 0;
     width: 100%;
 }

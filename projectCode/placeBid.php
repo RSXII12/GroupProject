@@ -5,7 +5,7 @@ session_start();
 
 //login check
 if (!isset($_SESSION['userId'])) {
-    header('Location: login.php');
+    header('Location: sellerLogin.html');
     exit;
 }
 

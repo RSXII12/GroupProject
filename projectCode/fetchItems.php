@@ -1,24 +1,32 @@
 <?php
-// Database connection credentials
+// Database connection
 $servername = "sci-project.lboro.ac.uk";
 $username = "295group6";
 $password = "wHiuTatMrdizq3JfNeAH";
 $dbname = "295group6";
 
-// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get current time in correct format
 date_default_timezone_set('Europe/London');
 $now = date('Y-m-d H:i:s');
 
-// Query to fetch non-expired items
-$sql = "SELECT itemId, title, price FROM iBayItems WHERE finish > ?";
+// Random but consistent daily picks: join image and limit to 16
+$sql = "
+    SELECT i.itemId, i.title, i.price, img.image
+    FROM iBayItems i
+    LEFT JOIN (
+        SELECT itemId, image
+        FROM iBayImages
+        WHERE number = 1
+    ) img ON i.itemId = img.itemId
+    WHERE i.finish > ?
+    ORDER BY MD5(CONCAT(i.itemId, CURDATE()))
+    LIMIT 16
+";
+
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $now);
 $stmt->execute();
@@ -27,61 +35,32 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $itemId = htmlspecialchars($row["itemId"]);
-        $escapedItemId = htmlspecialchars($itemId);
         $title = htmlspecialchars($row["title"]);
-        $price = htmlspecialchars($row["price"]);    
+        $price = htmlspecialchars($row["price"]);
 
         echo '<a href="itemDetails.php?id=' . $itemId . '" class="item-link">';
         echo '<div class="item-container">';
+
+        // Centered image wrapper
+        echo '<div class="image-wrapper">';
+        if (!empty($row['image'])) {
+            $imageData = base64_encode($row['image']);
+            echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Item Image">';
+        } else {
+            echo '<img src="placeholder.jpg" alt="No Image Available">';
+        }
+        echo '</div>';
+
         echo '<h3>' . $title . '</h3>';
         echo '<p>Price: £' . $price . '</p>';
-
-        // Get all images for this item
-        $imgSql = "SELECT image FROM iBayImages WHERE itemId = ?";
-        $imgStmt = $conn->prepare($imgSql);
-        $imgStmt->bind_param("s", $itemId);
-        $imgStmt->execute();
-        $imgResult = $imgStmt->get_result();
-
-        if ($imgResult->num_rows > 0) {
-            echo '<div class="image-carousel">';
-            $first = true;
-            while ($imgRow = $imgResult->fetch_assoc()) {
-                $imageData = base64_encode($imgRow['image']);
-                $display = $first ? 'block' : 'none';
-                echo '<img src="data:image/jpeg;base64,' . $imageData . '" style="width: 100px; display: ' . $display . ';">';
-                $first = false;
-            }
-            echo '</div>';
-        } else {
-            echo '<img src="placeholder.jpg" alt="No Image Available" style="width: 100px;">';
-        }
 
         echo '</div>';
         echo '</a>';
     }
 } else {
-    echo "No items found.";
+    echo "<p>No top picks available today.</p>";
 }
 
 $stmt->close();
 $conn->close();
 ?>
-
-<!-- JavaScript to cycle through images -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.image-carousel').forEach(container => {
-        const images = container.querySelectorAll('img');
-        let index = 0;
-        if (images.length < 2) return; // Skip carousel if only one image
-
-        setInterval(() => {
-            images.forEach((img, i) => {
-                img.style.display = i === index ? 'block' : 'none';
-            });
-            index = (index + 1) % images.length;
-        }, 4000);
-    });
-});
-</script>

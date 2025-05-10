@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f7fa;
+    color: #333;
+}
+
+/* Header */
+.header {
+    width: 100%;
+    background-color: #0056b3;
+    color: white;
+    text-align: center;
+    padding: 0 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo img {
+    max-width: 100px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.header h2 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Navigation */
+.nav-container {
+    background: #007bff;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.w3-bar {
+    display: flex;
+    gap: 20px;
+}
+
+.w3-bar a {
+    color: white;
+    font-size: 16px;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+}
+
+.w3-bar a:hover {
+    background: white;
+    color: #007bff;
+}
+
+/* Sidebar Toggle */
+.sidebar-toggle {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 240px;
+    padding: 14px;
+    background: #0056b3;
+    color: white;
+    font-size: 16px;
+    text-align: center;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    z-index: 1100;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-toggle:hover {
+    background: #004494;
+}
+
+/* Sidebar Menu */
+.sidebar {
+    position: fixed;
+    top: 10px;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background: #0056b3;
+    padding-top: 20px;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+
+.sidebar.open-sidebar {
+    left: 0;
+}
+
+.sidebar a {
+    display: block;
+    color: white;
+    padding: 14px 20px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background 0.3s ease;
+}
+
+.sidebar a:hover {
+    background: #004494;
+}
+
+/* Items Grid: 4x4 */
+#items-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Item Cards */
+.item-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.item-container {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.item-container img {
+    max-width: 100%;
+    max-height: 140px;
+    margin: 0 auto 12px;
+    display: block;
+    object-fit: contain;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+}
+
+.item-container h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 6px;
+    height: auto;
+    overflow: hidden;
+}
+
+.item-container p {
+    font-size: 14px;
+    color: #555;
+}
+
+.item-link:hover .item-container {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Footer */
+.footer {
+    background: #004494;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 14px;
+    margin-top: 40px;
+}
+
+/* Responsive fallback */
+@media (max-width: 1024px) {
+    #items-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    #items-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .sidebar-toggle {
+        width: 100%;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    #items-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.page-title {
+    text-align: center;
+    margin: 30px auto 10px;
+}
+
+.page-title h2 {
+    font-size: 26px;
+    font-weight: 600;
+    color: #222;
+}
+
+.image-wrapper {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.image-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}

@@ -142,9 +142,9 @@ $itemId = $_GET['id'] ?? '';
 	        echo '<div class="item-info">';
                 echo "<h2>" . htmlspecialchars($row['title']) . "</h2>";
                 echo "<p><strong>Category:</strong> " . htmlspecialchars($row['category']) . "</p>";
-                echo "<p><strong>Starting Price:</strong> Â£" . number_format($row['price'], 2) . "</p>";
-                echo "<p><strong>Current Bid:</strong> Â£" . number_format($row['currentBid'] ?: $row['price'], 2) . "</p>";
-                echo "<p><strong>Postage:</strong> Â£" . number_format($row['postage'], 2) . "</p>";
+                echo "<p><strong>Starting Price:</strong> £" . number_format($row['price'], 2) . "</p>";
+                echo "<p><strong>Current Bid:</strong> £" . number_format($row['currentBid'] ?: $row['price'], 2) . "</p>";
+                echo "<p><strong>Postage:</strong> £" . number_format($row['postage'], 2) . "</p>";
                 echo "<p><strong>Start Time:</strong> " . htmlspecialchars($row['start']) . "</p>";
                 echo "<p><strong>Auction Ends:</strong> " . htmlspecialchars($row['finish']) . "</p>";
 

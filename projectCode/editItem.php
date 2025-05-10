@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = trim($_POST['price']);
     $postage = trim($_POST['postage']);
     // Allowed categories to select - must be updated when new categories are added or removed
-    $allowedCategories = ["Fashion", "Technology", "Home & Garden"];
+    $allowedCategories = ["Fashion", "Technology", "Home & Garden", "Sports", "Toys"];
 
     $errors = [];
 
@@ -63,6 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate numeric fields
     if (!is_numeric($price) || $price < 0) {
         $errors[] = "Price must be a valid non-negative number.";
+    }
+
+    if ($price > 5000) {
+        $errors[] = "Price must be less than £5000";
     }
 
     if (!is_numeric($postage) || $postage < 0) {

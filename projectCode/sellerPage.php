@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (empty($listingDepartment)) throw new Exception("Department is required.");
         
         // Validate department against list
-        $validDepartments = ['Technology', 'Fashion', 'Home & Garden', 'Toys', 'Sports'];
+        $validDepartments = ['Books', 'Clothing', 'Computing', 'DvDs', 'Electronics', 'Collectables', 'Home & Garden', 'Music', 'Outdoors', 'Toys', 'Sports Equipment'];
         if (!in_array($listingDepartment, $validDepartments)) {
             throw new Exception("Invalid department selected.");
         }

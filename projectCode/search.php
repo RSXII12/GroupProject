@@ -58,7 +58,7 @@ if (!empty($_GET['location'])) {
     $types .= "s";
 }
 
-$validDepartments = ['Technology', 'Fashion', 'Home & Garden', 'Toys', 'Sports'];
+$validDepartments = ['Books', 'Clothing', 'Computing', 'DvDs', 'Electronics', 'Collectables', 'Home & Garden', 'Music', 'Outdoors', 'Toys', 'Sports Equipment'];
 if (!empty($_GET['department']) && in_array($_GET['department'], $validDepartments)) {
     $whereConditions[] = "i.category = ?";
     $params[] = $_GET['department'];

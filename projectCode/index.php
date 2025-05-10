@@ -42,11 +42,17 @@ $sellLink = isset($_SESSION['userId']) ? 'sellerPage.html' : 'sellerLogin.html';
 
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Categories</button>
     <div id="category-sidebar" class="sidebar">
-        <a href="buyerPage.php?category=Technology">Technology</a>
-        <a href="buyerPage.php?category=Fashion">Fashion</a>
-        <a href="buyerPage.php?category=Home & Garden">Home & Garden</a>
-        <a href="buyerPage.php?category=Toys">Toys</a>
-        <a href="buyerPage.php?category=Sports">Sports</a>
+    <a href="buyerPage.php?category=Books">Books</a>
+    <a href="buyerPage.php?category=Clothing">Clothing</a>
+    <a href="buyerPage.php?category=Computing">Computing</a>
+    <a href="buyerPage.php?category=DvDs">DvDs</a>
+    <a href="buyerPage.php?category=Electronics">Electronics</a>
+    <a href="buyerPage.php?category=Collectables">Collectables</a>
+    <a href="buyerPage.php?category=Home & Garden">Home & Garden</a>
+    <a href="buyerPage.php?category=Music">Music</a>
+    <a href="buyerPage.php?category=Outdoors">Outdoors</a>
+    <a href="buyerPage.php?category=Toys">Toys</a>
+    <a href="buyerPage.php?category=Sports Equipment">Sports Equipment</a>
     </div>
 
     <script>

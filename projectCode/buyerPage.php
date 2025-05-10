@@ -205,13 +205,19 @@ $selectedCategory = $_GET['category'] ?? '';
 
                 <!-- Department filter -->
                 <label for="department">Department</label>
-                <select id="department" name="department" class ="id-dropdown">
+                <select id="department" name="department" class="id-dropdown">
                     <option value="">Select a department</option>
-                    <option value="Technology" <?= $selectedCategory === 'Technology' ? 'selected' : '' ?>>Technology</option>
-                    <option value="Fashion" <?= $selectedCategory === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
+                    <option value="Books" <?= $selectedCategory === 'Books' ? 'selected' : '' ?>>Books</option>
+                    <option value="Clothing" <?= $selectedCategory === 'Clothing' ? 'selected' : '' ?>>Clothing</option>
+                    <option value="Computing" <?= $selectedCategory === 'Computing' ? 'selected' : '' ?>>Computing</option>
+                    <option value="DvDs" <?= $selectedCategory === 'DvDs' ? 'selected' : '' ?>>DvDs</option>
+                    <option value="Electronics" <?= $selectedCategory === 'Electronics' ? 'selected' : '' ?>>Electronics</option>
+                    <option value="Collectables" <?= $selectedCategory === 'Collectables' ? 'selected' : '' ?>>Collectables</option>
                     <option value="Home & Garden" <?= $selectedCategory === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
+                    <option value="Music" <?= $selectedCategory === 'Music' ? 'selected' : '' ?>>Music</option>
+                    <option value="Outdoors" <?= $selectedCategory === 'Outdoors' ? 'selected' : '' ?>>Outdoors</option>
                     <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
-                    <option value="Sports" <?= $selectedCategory === 'Sports' ? 'selected' : '' ?>>Sports</option>
+                    <option value="Sports Equipment" <?= $selectedCategory === 'Sports Equipment' ? 'selected' : '' ?>>Sports Equipment</option>
                 </select>
 
                 <!-- Price Range -->

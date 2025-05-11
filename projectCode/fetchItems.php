@@ -1,71 +1,63 @@
 <?php
-// Database connection
-$servername = "sci-project.lboro.ac.uk";
-$username = "295group6";
-$password = "wHiuTatMrdizq3JfNeAH";
-$dbname = "295group6";
+// fetchItems.php
+session_start();
+header('Content-Type: application/json; charset=UTF-8');// Tell the client we’re returning JSON
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$servername = "sci-project.lboro.ac.uk";
+$username   = "295group6";
+$password   = "wHiuTatMrdizq3JfNeAH";
+$dbname     = "295group6";
+// Connect to MySQL
+$mysqli = new mysqli($servername, $username, $password, $dbname);
+if ($mysqli->connect_error) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed.']);
+    exit;
 }
 
 date_default_timezone_set('Europe/London');
 $now = date('Y-m-d H:i:s');
+// Use server’s local time to filter out expired listings
 
-// Random but consistent daily picks: join image and limit to 16
+//main sql query
 $sql = "
-    SELECT i.itemId, i.title, i.price, i.currentBid, img.image
-    FROM iBayItems i
-    LEFT JOIN (
-        SELECT itemId, image
-        FROM iBayImages
-        WHERE number = 1
-    ) img ON i.itemId = img.itemId
-    WHERE i.finish > ?
-    ORDER BY MD5(CONCAT(i.itemId, CURDATE()))
-    LIMIT 16
+  SELECT 
+    i.itemId,
+    i.title,
+    i.price,
+    i.currentBid,
+    img.image
+  FROM iBayItems i
+  LEFT JOIN (
+    SELECT itemId, image
+    FROM iBayImages
+    WHERE number = 1
+  ) img ON i.itemId = img.itemId
+  WHERE i.finish > ?
+  ORDER BY MD5(CONCAT(i.itemId, CURDATE()))
+  LIMIT 16
 ";
-
-$stmt = $conn->prepare($sql);
+// Bind the current timestamp to the query’s placeholder
+$stmt = $mysqli->prepare($sql);
 $stmt->bind_param("s", $now);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $itemId = htmlspecialchars($row["itemId"]);
-        $title = htmlspecialchars($row["title"]);
-        $price = htmlspecialchars($row["price"]);
-        $currentBid = isset($row["currentBid"]) ? htmlspecialchars($row["currentBid"]) : null;
-        echo '<a href="itemDetails.php?id=' . $itemId . '" class="item-link">';
-        echo '<div class="item-container">';
-
-        // Centered image wrapper
-        echo '<div class="image-wrapper">';
-        if (!empty($row['image'])) {
-            $imageData = base64_encode($row['image']);
-            echo '<img src="data:image/jpeg;base64,' . $imageData . '" alt="Item Image">';
-        } else {
-            echo '<img src="placeholder.jpg" alt="No Image Available">';
-        }
-        echo '</div>';
-
-        echo '<h3>' . $title . '</h3>';
-        echo '<p>Starting price: £' . $price . '</p>';
-        if ($currentBid !== null) {
-            echo '<p>Current Bid: £' . $currentBid . '</p>';
-        } else {
-            echo '<p class="no-bid">No bids yet</p>';
-        }
-
-        echo '</div>';
-        echo '</a>';
-    }
-} else {
-    echo "<p>No top picks available today.</p>";
+//build output array
+$items = [];
+while ($row = $result->fetch_assoc()) {
+    $items[] = [
+        'itemId'     => $row['itemId'],
+        'title'      => $row['title'],
+        'price'      => (float)$row['price'],
+        'currentBid' => $row['currentBid'] !== null ? (float)$row['currentBid'] : null,
+        'image'      => $row['image'] !== null
+                         ? base64_encode($row['image'])
+                         : null
+    ];
 }
 
 $stmt->close();
-$conn->close();
-?>
+$mysqli->close();
+// Send the JSON-encoded array of items to the client
+echo json_encode($items);

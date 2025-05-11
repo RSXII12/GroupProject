@@ -1,136 +1,128 @@
 <?php
-
-// Start session and check login
+// sellerPage.php
+header('Content-Type: application/json');
 session_start();
+
+// require login
 if (!isset($_SESSION['userId'])) {
-    header("Location: sellerLogin.html");
-    exit();
+    http_response_code(401);// Must be logged in
+    echo json_encode(['success'=>false,'error'=>'Not authenticated.']);
+    exit;
 }
 
-// DB setup
-$servername = "sci-project.lboro.ac.uk"; 
-$dbUsername = "295group6"; 
-$dbPassword = "wHiuTatMrdizq3JfNeAH"; 
-$dbName = "295group6"; 
-
-$conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {// Only accept POST requests
+    http_response_code(405);
+    echo json_encode(['success'=>false,'error'=>'Invalid request method.']);
+    exit;
 }
 
-// Handle POST only
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+// grab & sanitize inputs
+$name       = trim($_POST['listing-name']   ?? '');
+$dept       = trim($_POST['department']     ?? '');
+$desc       = trim($_POST['description']    ?? '');
+$price      = trim($_POST['price']          ?? '');
+$postage    = trim($_POST['postage-fee']    ?? '');
+$deadline   = $_POST['deadline']            ?? '';
+$files      = $_FILES['photo-input']        ?? [];
+$userId     = $_SESSION['userId'];
+$itemId     = md5(uniqid('', true));// Generate unique item ID
+
+$validDepts = ['Books','Clothing','Computing','DvDs','Electronics','Collectables','Home & Garden','Music','Outdoors','Toys','Sports Equipment'];
+
+try {
+    // server‐side validation
+    if (strlen($name) < 4) {
+        throw new Exception('Listing name must be at least 4 characters.');
+    }
+    if (!in_array($dept, $validDepts, true)) {
+        throw new Exception('Please select a valid department.');
+    }
+    if (strlen($desc) > 1000) {
+        throw new Exception('Description must not exceed 1000 characters.');
+    }
+    if (!is_numeric($price) || $price <= 0 || $price > 5000) {
+        throw new Exception('Price must be greater than 0 and at most 5000.');
+    }
+    if (!is_numeric($postage) || $postage < 0) {
+        throw new Exception('Postage fee must be zero or positive.');
+    }
+    $deadlineTs = strtotime($deadline);
+    if (!$deadlineTs || $deadlineTs <= time()) {
+        throw new Exception('Deadline must be a valid future date/time.');
+    }
+
+    // require at least one image
+    if (empty($files['name'][0])) {
+        throw new Exception('You must upload at least one photo.');
+    }
+    // validate image count
+    $count = count($files['name']);
+    if ($count < 1 || $count > 2) {
+        throw new Exception('Please upload 1 or 2 photos.');
+    }
+
+    // Validate each uploaded file
+    $maxSize = 5 * 1024 * 1024; // 5MB
+    $allowed = ['image/jpeg','image/png','image/webp'];
+    for ($i = 0; $i < $count; $i++) {
+        if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+            throw new Exception("Error uploading {$files['name'][$i]}.");
+        }
+        if ($files['size'][$i] > $maxSize) {
+            throw new Exception("{$files['name'][$i]} exceeds 5MB.");
+        }
+        $type = mime_content_type($files['tmp_name'][$i]) ?: '';
+        if (!in_array($type, $allowed, true)) {
+            throw new Exception("Unsupported file type for {$files['name'][$i]}.");
+        }
+    }
+
+    // prepare DB
+    $conn = new mysqli("sci-project.lboro.ac.uk","295group6","wHiuTatMrdizq3JfNeAH","295group6");
+    if ($conn->connect_error) {
+        error_log('DB connect failed: '.$conn->connect_error);
+        throw new Exception('Internal server error.');
+    }
     $conn->begin_transaction();
 
-    try {
-        // Gather + sanitize input
-        $listingName = trim($_POST['listing-name'] ?? '');
-        $listingDepartment = trim($_POST['department'] ?? '');
-        $listingDescription = trim($_POST['description'] ?? '');
-        $listingPrice = $_POST['price'] ?? '';
-        $listingPostage = $_POST['postage-fee'] ?? '';
-        $listingDeadlineRaw = $_POST['deadline'] ?? '';
-        $listingDeadline = strtotime($listingDeadlineRaw);
-        $listingStart = date("Y-m-d H:i:s");
-        $listingDeadlineFormatted = date("Y-m-d H:i:s", $listingDeadline);
-        $listingPhotos = $_FILES['photo-input'];
-        $listingId = md5(uniqid(rand(), true));
-        $userId = $_SESSION['userId'];
+    // insert listing
+    $start  = date('Y-m-d H:i:s');
+    $finish = date('Y-m-d H:i:s', $deadlineTs);
+    $stmt = $conn->prepare(
+        "INSERT INTO iBayItems
+         (itemId,userId,title,category,description,price,postage,start,finish)
+         VALUES (?,?,?,?,?,?,?,?,?)"
+    );
+    $stmt->bind_param('sssssssss', $itemId,$userId,$name,$dept,$desc,$price,$postage,$start,$finish);
+    $stmt->execute();
+    $stmt->close();
 
-        // Validate core fields
-        if (strlen($listingName) < 4) throw new Exception("Listing name must be at least 4 characters.");
-        if (empty($listingDepartment)) throw new Exception("Department is required.");
-        
-        // Validate department against list
-        $validDepartments = ['Books', 'Clothing', 'Computing', 'DvDs', 'Electronics', 'Collectables', 'Home & Garden', 'Music', 'Outdoors', 'Toys', 'Sports Equipment'];
-        if (!in_array($listingDepartment, $validDepartments)) {
-            throw new Exception("Invalid department selected.");
-        }
-
-        // Validate price and postage
-        if (!is_numeric($listingPrice) || $listingPrice <= 0 || $listingPrice > 5000) {
-            throw new Exception("Price must be greater than 0 and no more than £5000.");
-        }
-        if (!is_numeric($listingPostage) || $listingPostage < 0) {
-            throw new Exception("Postage fee must be a non-negative number.");
-        }
-
-        // Deadline must be in the future
-        if (!$listingDeadline || $listingDeadline < time()) {
-            throw new Exception("Deadline must be a valid future date and time.");
-        }
-        //validate description length
-        if (strlen($listingDescription) > 1000) {
-            throw new Exception("Description must not exceed 1000 characters.");
-        }
-        // Validate uploaded images
-        $maxFileSize = 5 * 1024 * 1024; // 5 MB max
-        if (!empty($listingPhotos['name'][0])) {
-            if (count($listingPhotos['name']) > 2) {
-                throw new Exception("You may upload a maximum of 2 images.");
-            }
-
-            for ($i = 0; $i < count($listingPhotos['name']); $i++) {
-                $fileError = $listingPhotos['error'][$i];
-                $fileSize = $listingPhotos['size'][$i];
-                $fileName = $listingPhotos['name'][$i];
-
-                if ($fileError !== UPLOAD_ERR_OK) {
-                    throw new Exception("Error uploading image: $fileName");
-                }
-
-                if ($fileSize > $maxFileSize) {
-                    throw new Exception("Image too large (max 5MB): $fileName");
-                }
-
-                $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
-                $actualMimeType = mime_content_type($listingPhotos['tmp_name'][$i]);
-                if (!in_array($actualMimeType, $allowedMimeTypes)) {
-                    throw new Exception("Unsupported file type: $fileName ($actualMimeType)");
-                }
-            }
-        }
-
-        // Insert item
-        $stmt = $conn->prepare("INSERT INTO iBayItems (itemId, userId, title, category, description, price, postage, start, finish) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssssssss", $listingId, $userId, $listingName, $listingDepartment, $listingDescription, $listingPrice, $listingPostage, $listingStart, $listingDeadlineFormatted);
+    // insert images
+    for ($i = 0; $i < $count; $i++) {
+        $data = file_get_contents($files['tmp_name'][$i]);
+        $num  = $i + 1;
+        $stmt = $conn->prepare(
+            "INSERT INTO iBayImages
+             (imageId,image,itemType,imageSize,itemId,number)
+             VALUES (UUID(),?,?,?,?,?)"
+        );
+        // Bind blob + other fields
+        $stmt->bind_param('bisss', $data,$dept,$files['size'][$i],$itemId,$num);
+        $stmt->send_long_data(0, $data);
         $stmt->execute();
         $stmt->close();
-
-        // Insert images if any
-        if (!empty($listingPhotos['name'][0])) {
-            for ($i = 0; $i < count($listingPhotos['name']); $i++) {
-                $tmpName = $listingPhotos['tmp_name'][$i];
-                $fileSize = $listingPhotos['size'][$i];
-                $fileName = $listingPhotos['name'][$i];
-                $imageData = file_get_contents($tmpName);
-
-                if ($imageData === false) {
-                    throw new Exception("Failed to read image data for: $fileName");
-                }
-
-                
-                $number = $i + 1;
-
-                $imgStmt = $conn->prepare("INSERT INTO iBayImages (imageId, image, itemType, imageSize, itemId, number) VALUES (UUID(), ?, ?, ?, ?, ?)");
-                $imgStmt->bind_param("ssdss", $imageData, $listingDepartment, $fileSize, $listingId, $number);
-                $imgStmt->execute();
-                $imgStmt->close();
-            }
-        }
-
-        // commit transaction
-        $conn->commit();
-        header("Location: sellerPage.html?success=1");
-        exit();
-
-    } catch (Exception $e) { //throw error and rollback transaction
-        $conn->rollback();
-        $_SESSION['listing_error'] = $e->getMessage();
-        echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
-        exit();
     }
-}
 
-$conn->close(); // exit
+    $conn->commit();// Commit transaction and return success
+    echo json_encode(['success'=>true]);
+    $conn->close();
+
+} catch (Exception $e) {// Roll back on any error
+    if (!empty($conn) && $conn->in_transaction) {
+        $conn->rollback();
+        $conn->close();
+    }
+    http_response_code(422);// Unprocessable Entity
+    echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+}
 ?>

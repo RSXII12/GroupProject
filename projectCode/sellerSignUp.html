@@ -1,3 +1,4 @@
+<!-- sellerSignUp.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Seller Sign up</title>
     <link rel="stylesheet" href="login.css"/>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="header">
@@ -16,29 +19,23 @@
     <div class="login-container">
         <h2>Sign up to iBay</h2>
 
-        <!-- signup form -->
-        <form method="POST" action="signUp.php" id="signupForm">
-            <!-- username -->
+        <form id="signupForm">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required />
             <div class="error" id="usernameError">Username must be at least 4 characters.</div>
 
-            <!-- password -->
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required />
             <div class="error" id="passwordError">Password must be at least 4 characters.</div>
 
-            <!-- email -->
             <label for="email">Email</label>
             <input type="email" id="email" name="email" required />
             <div class="error" id="emailStatus">Checking email...</div>
 
-            <!-- address -->
             <label for="address">Address</label>
             <input type="text" id="address" name="address" required />
             <div class="error" id="addressError">Address must be at least 5 characters.</div>
 
-            <!-- postcode -->
             <label for="postcode">Postcode</label>
             <input type="text" id="postcode" name="postcode" required />
             <div class="error" id="postcodeError">Postcode must be 5–8 characters, letters and numbers only.</div>
@@ -50,109 +47,98 @@
     <p><a href="sellerLogin.html">Log in</a> instead</p>
 
     <div class="footer">
-        Copyright @2025-25 iBay Inc. All rights reserved
+        &copy; 2025 iBay Inc. All rights reserved
     </div>
 
     <script>
-        // hide all error messages initially
-        document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+    $(function() {
+        // Initially hide all error/status messages
+        $('.error').hide();
 
-        const form = document.getElementById('signupForm');
-
-        // field validators
-        const inputs = {
-            username: {
-                el: document.getElementById('username'),
-                error: document.getElementById('usernameError'),
-                validate: (val) => val.length >= 4,
-            },
-            password: {
-                el: document.getElementById('password'),
-                error: document.getElementById('passwordError'),
-                validate: (val) => val.length >= 4,
-            },
-            address: {
-                el: document.getElementById('address'),
-                error: document.getElementById('addressError'),
-                validate: (val) => val.length >= 5,
-            },
-            postcode: {
-                el: document.getElementById('postcode'),
-                error: document.getElementById('postcodeError'),
-                validate: (val) => /^[A-Z0-9 ]{5,8}$/i.test(val),
-            },
+        // Client-side validators for each input
+        const validators = {
+            username: v => v.length >= 4,
+            password: v => v.length >= 4,
+            address:  v => v.length >= 5,
+            postcode: v => /^[A-Z0-9 ]{5,8}$/i.test(v)
         };
 
-        // realtime input validation
-        Object.values(inputs).forEach(input => {
-            input.el.addEventListener('input', () => {
-                const value = input.el.value.trim();
-                if (input.validate(value)) {
-                    input.el.classList.add('valid');
-                    input.error.style.display = 'none';
-                } else {
-                    input.el.classList.remove('valid');
-                    input.error.style.display = 'block';
-                }
+        // Real-time validation on text inputs
+        $.each(validators, (field, fn) => {
+            $('#' + field).on('input', function() {
+                const val = $(this).val().trim();
+                const ok = fn(val);
+                $(this).toggleClass('valid', ok);
+                $('#' + field + 'Error').toggle(!ok);
             });
         });
 
-        // on submit: validate all fields
-        form.addEventListener('submit', (e) => {
-            let isValid = true;
-            Object.values(inputs).forEach(input => {
-                const value = input.el.value.trim();
-                if (!input.validate(value)) {
-                    input.el.classList.remove('valid');
-                    input.error.style.display = 'block';
-                    isValid = false;
-                }
-            });
-            if (!isValid) e.preventDefault(); // stop if invalid
-        });
-
-        // email check logic
-        const emailInput = document.getElementById('email');
-        const emailStatus = document.getElementById('emailStatus');
-        let emailCheckTimeout;
-
-        emailInput.addEventListener('input', () => {
-            clearTimeout(emailCheckTimeout);
-            const email = emailInput.value.trim();
-
-            // reset if empty
-            if (email === "") {
-                emailStatus.style.display = 'none';
-                emailInput.classList.remove('valid');
-                emailStatus.textContent = "";
+        // check for email availability
+        let emailTimer;
+        $('#email').on('input', function() {
+            clearTimeout(emailTimer);
+            const email = $(this).val().trim();
+            if (!email) {// Reset status if empty
+                $('#emailStatus').hide().text('');
+                $('#email').removeClass('valid');
                 return;
             }
-
-            // debounce check
-            emailStatus.style.display = 'block';
-            emailStatus.style.color = "black";
-            emailStatus.textContent = "Checking email...";
-
-            emailCheckTimeout = setTimeout(() => {
-                fetch(`checkEmail.php?email=${encodeURIComponent(email)}`)
-                    .then(response => response.json())
-                    .then(data => {
+            $('#emailStatus').show().css('color','black').text('Checking email...');// Show checking message
+            emailTimer = setTimeout(() => {
+                $.getJSON('checkEmail.php', { email })// Call checkEmail.php with JSON response
+                    .done(data => {
                         if (data.taken) {
-                            emailStatus.textContent = "Email already in use.";
-                            emailStatus.style.color = "red";
-                            emailInput.classList.remove('valid');
+                            $('#emailStatus').text('Email already in use.').css('color','red');
+                            $('#email').removeClass('valid');
                         } else {
-                            emailStatus.textContent = "Email is available.";
-                            emailStatus.style.color = "green";
-                            emailInput.classList.add('valid');
+                            $('#emailStatus').text('Email is available.').css('color','green');
+                            $('#email').addClass('valid');
                         }
                     })
-                    .catch(err => {
-                        emailStatus.textContent = "Error checking email.";
-                        emailStatus.style.color = "orange";
+                    .fail(() => {
+                        $('#emailStatus').text('Error checking email.').css('color','orange');
                     });
             }, 500);
         });
+
+        // Handle form submission via AJAX
+        $('#signupForm').on('submit', function(e) {
+            e.preventDefault();
+            let allValid = true;
+            $.each(validators, (field, fn) => {// Validate each field before sending
+                if (!fn($('#' + field).val().trim())) {
+                    $('#' + field + 'Error').show();
+                    allValid = false;
+                }
+            });
+            if (!allValid) return;
+            // Prepare JSON payload
+            const payload = {
+                username: $('#username').val().trim(),
+                password: $('#password').val().trim(),
+                email:    $('#email').val().trim(),
+                address:  $('#address').val().trim(),
+                postcode: $('#postcode').val().trim()
+            };
+
+            $.ajax({// AJAX POST to signUp.php
+                url: 'signUp.php',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify(payload)
+            })
+            .done(resp => {
+                if (resp.success) {
+                    alert('Registration successful!');
+                    window.location.href = 'sellerLogin.html';// On success, alert and redirect to login
+                } else {
+                    alert(resp.error);// Show server‐side error message
+                }
+            })
+            .fail(() => alert('Server error. Please try again later.'));
+        });
+    });
     </script>
 </body>
 </html>

@@ -1,70 +1,71 @@
 <?php
-session_start(); // resume session for login
+// login.php — JSON‐only API for AJAX login
+header('Content-Type: application/json; charset=utf-8');// Return JSON responses
+session_start();
 
 // DB config
 $servername = "sci-project.lboro.ac.uk";
 $dbUsername = "295group6";
 $dbPassword = "wHiuTatMrdizq3JfNeAH";
-$dbName = "295group6";
+$dbName     = "295group6";
 
-// connect to DB
+$raw  = file_get_contents('php://input');// Read raw POST body
+$data = json_decode($raw, true);// Decode JSON into array
+if (json_last_error() !== JSON_ERROR_NONE) {// Validate JSON
+    echo json_encode(['success' => false, 'error' => 'Invalid request format.']);
+    exit;
+}
+//extract and trim credentials
+$email    = trim($data['email']    ?? '');
+$password = trim($data['password'] ?? '');
+
+// basic validation
+if ($email === '' || $password === '') {
+    echo json_encode(['success' => false, 'error' => 'Please enter both email and password.']);
+    exit;
+}
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {//check email format
+    echo json_encode(['success' => false, 'error' => 'Please enter a valid email address.']);
+    exit;
+}
+
+// connect
 $conn = new mysqli($servername, $dbUsername, $dbPassword, $dbName);
 if ($conn->connect_error) {
-    error_log("DB connection failed: " . $conn->connect_error);
-    header("Location: sellerLogin.html?error=server");
-    exit();
+    error_log("DB connection failed: " . $conn->connect_error);// log db con failure
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Server error.']);
+    exit;
 }
 
-// only allow POST requests
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $inputEmail = trim($_POST['email'] ?? '');
-    $inputPassword = trim($_POST['password'] ?? '');
+// lookup user
+$stmt = $conn->prepare("SELECT userId, password, name FROM iBayMembers WHERE email = ?");
+$stmt->bind_param('s', $email);
+$stmt->execute();
+$stmt->store_result();
 
-    // basic checks
-    if ($inputEmail === '' || $inputPassword === '') {
-        header("Location: sellerLogin.html?error=empty");
-        exit();
-    }
-
-    // validate email format
-    if (!filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
-        header("Location: sellerLogin.html?error=invalidemail");
-        exit();
-    }
-
-    // fetch user from DB
-    $stmt = $conn->prepare("SELECT userId, password, name FROM iBayMembers WHERE email = ?");
-    if (!$stmt) {
-        error_log("Prepare failed: " . $conn->error);
-        header("Location: sellerLogin.html?error=server");
-        exit();
-    }
-
-    $stmt->bind_param("s", $inputEmail);
-    $stmt->execute();
-    $stmt->store_result();
-    $stmt->bind_result($userId, $hashedPassword, $name);
-
-    if ($stmt->num_rows > 0) {
-        $stmt->fetch();
-
-        // verify password match
-        if (password_verify($inputPassword, $hashedPassword)) {
-            $_SESSION['userId'] = $userId;
-            $_SESSION['username'] = $name;
-            header("Location: buyerPage.php"); // redirect
-            exit();
-        } else {
-            header("Location: sellerLogin.html?error=invalid");
-            exit();
-        }
-    } else {
-        header("Location: sellerLogin.html?error=notfound");
-        exit();
-    }
-
+if ($stmt->num_rows === 0) {// No user found with that email
+    echo json_encode(['success' => false, 'error' => 'Email not registered.']);
     $stmt->close();
+    $conn->close();
+    exit;
 }
 
-$conn->close(); // close connection
+$stmt->bind_result($userId, $hashed, $name);
+$stmt->fetch();
+$stmt->close();
+
+// verify password
+if (!password_verify($password, $hashed)) {
+    echo json_encode(['success' => false, 'error' => 'Incorrect password.']);
+    $conn->close();
+    exit;
+}
+
+// success
+$_SESSION['userId']   = $userId;
+$_SESSION['username'] = $name;
+
+echo json_encode(['success' => true]);
+$conn->close();
 ?>

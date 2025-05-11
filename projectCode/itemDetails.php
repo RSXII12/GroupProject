@@ -1,12 +1,11 @@
 <?php
 session_start();
 
-// grab & validate ID
+// Ensure 'id' parameter is present and matches allowed pattern
 if (!isset($_GET['id']) || !preg_match('/^[a-z0-9]+$/i', $_GET['id'])) {
     die("Invalid item ID.");
 }
 $itemId = $_GET['id'];
-
 
 $servername = "sci-project.lboro.ac.uk";
 $username   = "295group6";
@@ -18,61 +17,64 @@ if ($mysqli->connect_error) {
     die("DB connection failed: " . $mysqli->connect_error);
 }
 
-//  fetch item
+// Prepare and execute query for item metadata
 $stmt = $mysqli->prepare("
     SELECT userId, title, category, description, price, postage, start, finish, currentBid
-    FROM iBayItems
-    WHERE itemId = ?
+      FROM iBayItems
+     WHERE itemId = ?
 ");
 $stmt->bind_param('s', $itemId);
 $stmt->execute();
 $res = $stmt->get_result();
 if ($res->num_rows === 0) {
-    die("Item not found.");
+    die("Item not found."); // Abort if no matching item
 }
 $item = $res->fetch_assoc();
 $stmt->close();
 
-// fetch seller postcode
+// Query seller name and location for display on page
 $stmt = $mysqli->prepare("
     SELECT name, postcode
       FROM iBayMembers
      WHERE userId = ?
 ");
+
+
 $stmt->bind_param('s', $item['userId']);
 $stmt->execute();
-$res = $stmt->get_result();
-$member   = $res->fetch_assoc();
-$postcode = $member['postcode'] ?? '';
-$sellerName = $member['name'] ?? 'Unknown seller';
+$member = $stmt->get_result()->fetch_assoc();
+$postcode   = $member['postcode'] ?? '';
+$sellerName = $member['name']     ?? 'Unknown seller';
 $stmt->close();
 
-//  fetch images
+// Retrieve each image blob, convert to data-URLs
 $stmt = $mysqli->prepare("
     SELECT image
-    FROM iBayImages
-    WHERE itemId = ?
-    ORDER BY number
+      FROM iBayImages
+     WHERE itemId = ?
+     ORDER BY number
 ");
 $stmt->bind_param('s', $itemId);
 $stmt->execute();
 $res = $stmt->get_result();
 $images = [];
 while ($row = $res->fetch_assoc()) {
-    $images[] = 'data:image/jpeg;base64,' . base64_encode($row['image']);
+    $images[] = 'data:image/jpeg;base64,'.base64_encode($row['image']);
 }
 $stmt->close();
-$mysqli->close();
+$mysqli->close(); // Close DB connection
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title><?php echo htmlspecialchars($item['title']); ?></title>
+  <title><?= htmlspecialchars($item['title']) ?></title>
+  <!-- Leaflet CSS for the map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
-    /* GLOBAL & LAYOUT */
+  /* styles (has to be here for some reason)*/
     html { box-sizing: border-box; }
     *, *::before, *::after { box-sizing: inherit; }
     body {
@@ -115,44 +117,38 @@ $mysqli->close();
 
     /* IMAGE SLIDER */
     .images {
-  position: relative;
-  width: 400px;
-  height: 400px;
-  overflow: hidden;
-  display: flex;              /* container flex so active slide can center */
-  align-items: center;
-  justify-content: center;
-  background: transparent;     /* or whatever your page bg is */
-}
-
-.images .slide {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  display: none;              /* hide by default */
-}
-
-.images .slide.active {
-  display: flex;              /* show only the active one */
-  align-items: center;        /* center its img vertically */
-  justify-content: center;    /* center its img horizontally */
-}
-
-.images .slide img {
-  max-width: 100%;            /* scale to fit container */
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  display: block;
-}
-
-/* keep your prev/next buttons the same */
-.images button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  /* …other styles… */
-}
+      position: relative;
+      width: 400px;
+      height: 400px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+    .images .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: none;
+    }
+    .images .slide.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .images .slide img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+    .images button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.5);
+      color: #fff; border: none; padding: 0.5em; cursor: pointer;
+    }
     .images .prev { left: 0.5em; }
     .images .next { right: 0.5em; }
 
@@ -215,11 +211,11 @@ $mysqli->close();
   <!-- MAIN CONTENT -->
   <main class="page-content">
     <div class="flex">
-      <!-- IMAGE SLIDER -->
+      <!-- Image slider with prev/next controls -->
       <div class="images">
         <?php foreach($images as $i => $src): ?>
-          <div class="slide<?php echo $i === 0 ? ' active' : ''; ?>">
-            <img src="<?php echo $src; ?>" alt="Item image <?php echo $i+1; ?>">
+          <div class="slide<?= $i===0 ? ' active' : '' ?>">
+            <img src="<?= $src ?>" alt="Item image <?= $i+1 ?>">
           </div>
         <?php endforeach; ?>
         <button class="prev">&larr;</button>
@@ -228,25 +224,24 @@ $mysqli->close();
 
       <!-- DETAILS -->
       <div class="details">
-        <h1><?php echo htmlspecialchars($item['title']); ?></h1>
+        <h1><?= htmlspecialchars($item['title']) ?></h1>
         <p><strong>Seller:</strong> <?= htmlspecialchars($sellerName) ?></p>
-        <p><strong>Category:</strong> <?php echo htmlspecialchars($item['category']); ?></p>
-        <p><strong>Starting Price:</strong> £<?php echo number_format($item['price'],2); ?></p>
-        <p><strong>Current Bid:</strong> £<?php echo number_format($item['currentBid'],2); ?></p>
-        <p><strong>Postage:</strong> £<?php echo number_format($item['postage'],2); ?></p>
-        <p><strong>Start Time:</strong> <?php echo htmlspecialchars($item['start']); ?></p>
-        <p><strong>Auction Ends:</strong> <?php echo htmlspecialchars($item['finish']); ?></p>
-        <p><strong>Description:</strong><br> <?php echo nl2br(htmlspecialchars($item['description'])); ?> </p>
+        <p><strong>Category:</strong> <?= htmlspecialchars($item['category']) ?></p>
+        <p><strong>Starting Price:</strong> £<span id="start-price"><?= number_format($item['price'],2) ?></span></p>
+        <p><strong>Current Bid:</strong> £<span id="current-bid"><?= number_format($item['currentBid'],2) ?></span></p>
+        <p><strong>Postage:</strong> £<?= number_format($item['postage'],2) ?></p>
+        <p><strong>Start Time:</strong> <?= htmlspecialchars($item['start']) ?></p>
+        <p><strong>Auction Ends:</strong> <?= htmlspecialchars($item['finish']) ?></p>
+        <p><strong>Description:</strong><br><?= nl2br(htmlspecialchars($item['description'])) ?></p>
 
-
-        <form class="bid" method="post" action="placeBid.php">
+        <div id="bid-message" style="margin:1em 0;color:red;"></div>
+        <form class="bid">
           <label for="bid">Enter your bid (£):</label>
           <input type="text" id="bid" name="bid" required>
-          <input type="hidden" name="itemId" value="<?php echo htmlspecialchars($itemId); ?>">
           <button type="submit">Place Bid</button>
         </form>
-        
-        <p><strong>Item Location:</strong> <?php echo htmlspecialchars($postcode); ?></p>
+
+        <p><strong>Item Location:</strong> <?= htmlspecialchars($postcode) ?></p>
       </div>
     </div>
 
@@ -254,7 +249,7 @@ $mysqli->close();
     <div id="map"></div>
   </main>
 
-  <!-- LIGHTBOX (outside of main) -->
+  <!-- LIGHTBOX -->
   <div id="lightbox" class="lightbox">
     <span class="lightbox-close">&times;</span>
     <img id="lightbox-img" src="" alt="Enlarged item">
@@ -268,103 +263,25 @@ $mysqli->close();
   <!-- SCRIPTS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // BID VALIDATION
-    const USER_ID     = "<?php echo addslashes($_SESSION['userId'] ?? ''); ?>";
-    const SELLER_ID   = "<?php echo addslashes($item['userId']); ?>";
-    const START_PRICE = <?php echo json_encode((float)$item['price']); ?>;
-    const CURRENT_BID = <?php echo json_encode((float)$item['currentBid']); ?>;
-    const FINISH_TIME = new Date("<?php echo $item['finish']; ?>");
+    // Pass server-side data into JS constants
+    const USER_ID     = "<?= addslashes($_SESSION['userId'] ?? '') ?>";
+    const SELLER_ID   = "<?= addslashes($item['userId']) ?>";
+    const START_PRICE = <?= json_encode((float)$item['price']) ?>;
+    const CURRENT_BID = <?= json_encode((float)$item['currentBid']) ?>;
+    const FINISH_TIME = new Date("<?= $item['finish'] ?>");
+    const ITEM_ID     = "<?= htmlspecialchars($itemId) ?>";
 
-    function showError(msg) {
-      alert(msg);
+    function showMessage(msg, isError = true) {
+      $('#bid-message').text(msg).css('color', isError ? 'red' : 'green');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.querySelector('form.bid');
-        if (!form) return;
-
-        // 1) not signed in?
-        if (!USER_ID) {
-          form.querySelector('input[name="bid"]').disabled = true;
-          form.querySelector('button[type="submit"]').disabled = true;
-          const note = document.createElement('p');
-          note.innerHTML = 'Please <a href="sellerLogin.html">log in</a> to place a bid.';
-          note.style.color = 'red';
-          form.parentNode.insertBefore(note, form);
-          return;
-        }
-
-        // 2) no self-bidding
-        if (USER_ID === SELLER_ID) {
-          form.querySelector('input[name="bid"]').disabled = true;
-          form.querySelector('button[type="submit"]').disabled = true;
-          const note = document.createElement('p');
-          note.textContent = "You cannot bid on your own listing.";
-          note.style.color = "red";
-          form.parentNode.insertBefore(note, form);
-          return;
-        }
-
-        // 3) all the other validations on submit
-        form.addEventListener('submit', function(e) {
-          e.preventDefault();
-          const bidStr = this.bid.value.trim();
-          const moneyRE = /^(\d+)(\.\d{1,2})?$/;
-          if (!moneyRE.test(bidStr)) {
-            return showError("Enter a non-negative amount with up to two decimals.");
-          }
-          const bidVal = parseFloat(bidStr);
-          if (bidVal < 0) {
-            return showError("Your bid cannot be negative.");
-          }
-          if (new Date() > FINISH_TIME) {
-            return showError("The auction has already ended.");
-          }
-          const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
-          if (bidVal < minAllowed) {
-            return showError(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
-          }
-          this.submit();
-        });
-      });
-
-      // LIGHTBOX
-      const lightbox = document.getElementById('lightbox');
-      const lbImg     = document.getElementById('lightbox-img');
-      const lbClose   = document.querySelector('.lightbox-close');
-      document.querySelectorAll('.slide img').forEach(img => {
-        img.style.cursor = 'pointer';
-        img.addEventListener('click', () => {
-          lbImg.src = img.src;
-          lightbox.style.display = 'flex';
-        });
-      });
-      lbClose.addEventListener('click', () => lightbox.style.display = 'none');
-      lightbox.addEventListener('click', e => {
-        if (e.target === lightbox) lightbox.style.display = 'none';
-      });
-
-      // IMAGE SLIDER
-      (() => {
-        const slides = document.querySelectorAll('.slide');
-        let idx = 0;
-        document.querySelector('.next').onclick = () => {
-          slides[idx].classList.remove('active');
-          idx = (idx + 1) % slides.length;
-          slides[idx].classList.add('active');
-        };
-        document.querySelector('.prev').onclick = () => {
-          slides[idx].classList.remove('active');
-          idx = (idx - 1 + slides.length) % slides.length;
-          slides[idx].classList.add('active');
-        };
-      })();
-
-      // MAP & GEOCODING
-      (() => {
-        fetch(
+    $(function(){
+      // enable map even if not logged in
+      // initialize map & geocode
+      (function(){
+        fetch(// Initialize map using Nominatim geocoding by postcode
           'https://nominatim.openstreetmap.org/search?format=json&postalcode=' +
-          encodeURIComponent("<?php echo addslashes($postcode); ?>") +
+          encodeURIComponent("<?= addslashes($postcode) ?>") +
           '&countrycodes=gb'
         )
         .then(r => r.json())
@@ -381,7 +298,84 @@ $mysqli->close();
         })
         .catch(console.error);
       })();
-    
+
+      // Bid form logic: validation, AJAX submit, update UI
+      const form = $('form.bid');
+      if (!USER_ID) {// Disable form for guests
+        form.find('input,button').prop('disabled', true);
+        showMessage('Please log in to bid.');
+      } else if (USER_ID === SELLER_ID) {// Prevent seller from self-bidding
+        form.find('input,button').prop('disabled', true);
+        showMessage("You cannot bid on your own listing.");
+      } else {
+        form.on('submit', function(e){
+          e.preventDefault();
+          $('#bid-message').empty();
+          let bidVal = $('#bid').val().trim();
+          if (!/^\d+(\.\d{1,2})?$/.test(bidVal)) {// Validate numeric format
+            return showMessage("Enter a valid amount up to two decimals.");
+          }
+          bidVal = parseFloat(bidVal);
+          if (new Date() > FINISH_TIME) {// Check auction end
+            return showMessage("Auction has ended.");
+          }
+          const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
+          if (bidVal < minAllowed) {
+            return showMessage(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
+          }
+          // Submit via AJAX JSON
+          $.ajax({
+            url: 'placeBid.php',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify({ itemId: ITEM_ID, bid: bidVal })
+          })
+          .done(resp => {
+            if (resp.success) {
+              $('#current-bid').text(resp.newBid.toFixed(2));
+              showMessage("Bid placed!", false);
+              $('#bid').val('');
+            } else {
+              showMessage(resp.error);
+            }
+          })
+          .fail(() => showMessage("Server error. Try again later."));
+        });
+      }
+
+      // Lightbox for zooming images
+      const lightbox = document.getElementById('lightbox');
+      const lbImg     = document.getElementById('lightbox-img');
+      const lbClose   = document.querySelector('.lightbox-close');
+      document.querySelectorAll('.slide img').forEach(img => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', () => {
+          lbImg.src = img.src;
+          lightbox.style.display = 'flex';
+        });
+      });
+      lbClose.addEventListener('click', () => lightbox.style.display = 'none');
+      lightbox.addEventListener('click', e => {
+        if (e.target === lightbox) lightbox.style.display = 'none';
+      });
+
+      // Simple slider functionality
+      (function(){
+        const slides = document.querySelectorAll('.slide');
+        let idx = 0;
+        document.querySelector('.next').onclick = () => {
+          slides[idx].classList.remove('active');
+          idx = (idx + 1) % slides.length;
+          slides[idx].classList.add('active');
+        };
+        document.querySelector('.prev').onclick = () => {
+          slides[idx].classList.remove('active');
+          idx = (idx - 1 + slides.length) % slides.length;
+          slides[idx].classList.add('active');
+        };
+      })();
+    });
   </script>
 </body>
 </html>

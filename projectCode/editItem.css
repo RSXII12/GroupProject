@@ -1,14 +1,13 @@
-/* Reset & base */
+
 html, body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
     background-color: #f8f9fa;
-    overflow-x: hidden;    /* prevent horizontal scroll */
+    overflow-x: hidden;    
     box-sizing: border-box;
 }
 
-/* Header */
 .header {
     width: 100%;
     background-color: #0056b3;
@@ -37,7 +36,7 @@ html, body {
 .header-center { justify-content: center; }
 .header-right { justify-content: flex-end; }
 .header-left img {
-  height: 40px;     /* or whatever fits your header */
+  height: 40px;     
   width: auto;
 }
 .nav-button {
@@ -53,17 +52,16 @@ html, body {
     background-color: #999;
 }
 
-/* Main form container */
+
 .form-container {
-    max-width: 800px;      /* constrain width */
-    margin: 40px auto;     /* space above & center */
+    max-width: 800px;      
+    margin: 40px auto;     
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 8px;
     box-sizing: border-box;
 }
 
-/* Form elements */
 label {
     display: block;
     margin-bottom: 5px;
@@ -88,7 +86,6 @@ input, select, textarea {
     width: auto;
 }
 
-/* Buttons */
 .form-buttons {
     display: flex;
     justify-content: center;
@@ -113,10 +110,9 @@ input, select, textarea {
     background-color: #999;
 }
 
-/* Photo previews */
 .photo-preview {
     display: flex;
-    flex-wrap: wrap;     /* allow wrapping */
+    flex-wrap: wrap;     
     gap: 8px;
 }
 .photo-preview img {
@@ -128,7 +124,7 @@ input, select, textarea {
     border-radius: 4px;
 }
 
-/* Footer */
+
 .footer {
   clear: both;
   width: 100%;
@@ -137,12 +133,10 @@ input, select, textarea {
   background: #2f64ad;
   color: white;
   font-size: 12px;
-  /* remove position:absolute/bottom:0 */
   position: relative;
-  margin-top: 40px;  /* push it below the form */
+  margin-top: 40px;  
 }
 
-/* Responsive tweaks */
 @media screen and (max-width: 768px) {
     .header {
         flex-direction: column;
@@ -159,12 +153,12 @@ input, select, textarea {
     }
 }
 
-/* lightbox hidden by default */
+
 #lightbox-overlay.hidden {
   display: none;
 }
 
-/* full-screen semi-transparent backdrop */
+
 #lightbox-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -176,7 +170,7 @@ input, select, textarea {
   z-index: 9999;
 }
 
-/* the enlarged image */
+
 #lightbox-img {
   max-width: 90%;
   max-height: 90%;
@@ -185,7 +179,6 @@ input, select, textarea {
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* close button */
 #lightbox-close {
   position: absolute;
   top: 20px; right: 30px;

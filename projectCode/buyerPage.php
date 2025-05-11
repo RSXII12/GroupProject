@@ -1,262 +1,220 @@
 <?php
-session_start();
-//determine if user is logged in
-$isLoggedIn = isset($_SESSION['userId']);
-//get category from url if exists for lookup
-$selectedCategory = $_GET['category'] ?? '';
+session_start(); //start/restart session
+$isLoggedIn = isset($_SESSION['userId']); //determine if user is logged in 
+$selectedCategory = $_GET['category'] ?? '';//get selected category from url if exists
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>iBay Home</title>
-    <link rel="stylesheet" href="buyerPage.css">
-    <!--jQuery and jQuery ui for sliders-->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script>
-        $(function () {
-            //initialise slider
-            $("#price-slider").slider({
-                range: true,
-                min: 0,
-                max: 5000,
-                values: [0, 5000],
-                slide: function (event, ui) {
-                    $("#price-range").val("£" + ui.values[0] + " - £" + ui.values[1]);
-                    $("#price-range-label").text("£" + ui.values[0] + " - £" + ui.values[1]);
-                }
-            });
-            //show initial label
-            const slider = $("#price-slider").slider("values");
-            $("#price-range").val("£" + slider[0] + " - £" + slider[1]);
-            $("#price-range-label").text("£" + slider[0] + " - £" + slider[1]);
-            //auto search on page load (url category integration)
-            performSearch();
-            //connect search buttons with function
-            $("#apply-filters").on("click", () => performSearch(1));
-            $("#search-button").on("click", () => performSearch(1));
-            $("#sort-options").on("change", () => performSearch(1));
-            $('#items-per-page').on('change', () => performSearch(1));
-            
-        });
-
-        function performSearch(page = 1) {
-            const searchText = $('#search-field').val().trim();
-            const [minPrice, maxPrice] = $("#price-slider").slider("values");
-            const timeRemaining = $('#time-remaining').val().trim();
-            const location = $('#location').val().trim();
-            const department = $('#department').val().trim();
-            const freePostage = $('#free-postage').is(':checked');
-            const params = { page };
-            const sortBy = $('#sort-options').val();
-            const perPage = parseInt($('#items-per-page').val(), 10) || 10;
-            params.perPage = perPage;
-            if (sortBy) params.sortBy = sortBy;
-            if (searchText) params.searchText = searchText;
-            if (department) params.department = department;
-            if (timeRemaining) params.timeRemaining = timeRemaining;
-            if (location) params.location = location;
-            if (freePostage) params.freePostage = 1;
-            if (minPrice !== 0 || maxPrice !== 5000) {
-                params.minPrice = minPrice;
-                params.maxPrice = maxPrice;
-            }
-
-            $.ajax({
-                url: 'search.php',
-                type: 'GET',
-                data: params,
-                dataType: 'json',
-                success: function (data) {
-                    displayResults(data.items);
-                    renderPagination(data.page, data.total, data.perPage);
-                },
-                error: function (xhr, status, error) {
-                    console.error("AJAX Error:", error);
-                    $(".main-content").append("<p>Error loading results.</p>");
-                }
-            });
-        }
-
-        function displayResults(items) {
-            const container = document.querySelector(".main-content");
-            let existingResults = container.querySelector(".search-results");
-            if (existingResults) existingResults.remove();
-
-            const resultsDiv = document.createElement("div");
-            resultsDiv.classList.add("search-results");
-
-            let html = "";
-
-            if (!items.length) {
-                html += "<p>No matching items found.</p>";
-            } else {
-                //render itemCards
-                items.forEach(item => {
-                    const descriptionHTML = item.description
-                ? `<div class="description">${item.description}</div>`
-                : '';
-                    html += `
-                        <div class="result-card">
-                        <img src="${item.image}" alt="Item Image" />
-                        <div class="card-content">
-                            <a href="itemDetails.php?id=${item.itemId}">
-                                <h4>${item.title}</h4>
-                            </a>
-                            <div class="card-details">
-                            <div class="left-info">
-                                <div class="price">Starting Price: £${item.price}</div>
-                                <div class="bid"> Current Bid: £${item.currentBid ?? item.price}</div>
-                                <div class = "postage">Postage: £${item.postage}</div>
-                                <div class="location">Postcode: ${item.location}</div>
-                                <div class="category">Category: ${item.category}</div>
-                                <div class="time-remaining">Time remaining: ${formatTime(item.time_remaining)}</div>
-                            </div>
-                            ${descriptionHTML}
-                            </div>
-                        </div>
-                        </div>
-                    `;
-                });
-            }
-                        
-
-            resultsDiv.innerHTML = html;
-            container.appendChild(resultsDiv);
-        }
-
-        function formatTime(secondsLeft) {
-    const days = Math.floor(secondsLeft / 86400);
-    const hours = Math.floor((secondsLeft % 86400) / 3600);
-    const minutes = Math.floor((secondsLeft % 3600) / 60);
-
-    let result = '';
-    if (days > 0) result += `${days}d `;
-    if (hours > 0 || days > 0) result += `${hours}h `;
-    if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m`;
-    if (result === '') result = 'Less than 1m left';
-    else result += ' left';
-
-    return result;
-    }
-    let currentPage = 1;
-
-    function fetchItems(page = 1) {
-        fetch(`your_php_file.php?page=${page}`)
-            .then(res => res.json())
-            .then(data => {
-                renderItems(data.items);
-                renderPagination(data.page, data.total, data.perPage);
-            });
-    }
-    function renderPagination(currentPage, totalItems, perPage) {
-    const totalPages = Math.ceil(totalItems / perPage);
-    const container = document.getElementById("pagination-container");
-    container.innerHTML = '';
-
-    for (let page = 1; page <= totalPages; page++) {
-        const btn = document.createElement('button');
-        btn.textContent = page;
-        if (page === currentPage) btn.disabled = true;
-        btn.addEventListener('click', () => performSearch(page));
-        container.appendChild(btn);
-    }
-}
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>iBay Home</title>
+  <link rel="stylesheet" href="buyerPage.css">
+  <!-- jQuery & jQuery UI -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 <body>
-    <!--Header-->
-    <div class="header">
-    <?php if ($isLoggedIn): ?>
-        <span>You are logged in as <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>. 
-            <a href="logout.php">Log out</a> | 
-            <a href="listingPage.php">View My Listings</a>
-        </span>
+  <!-- HEADER -->
+  <div class="header">
+    <?php if($isLoggedIn)://handle user welcome if logged in, change site layout as appropriate ?> 
+      <span>You are logged in as <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>.
+        <a href="logout.php">Log out</a> |
+        <a href="listingPage.php">View My Listings</a>
+      </span>
     <?php else: ?>
-        <span>Please <a href="sellerLogin.html">Log in</a> or <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
+      <span>Please <a href="sellerLogin.html">Log in</a> or
+      <a href="sellerSignUp.html">Sign up</a> to use iBay</span>
     <?php endif; ?>
-    <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing">Create a listing</a>
-    </div>
-    <!-- MAIN LAYOUT -->        
-    <div class="container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="logo">
-                <a href="index.php"><img src="iBay-logo.png" class="img"></a>
-            </div>
-            <div class="search-options" >
-                <h3>Advanced Search</h3>
-                <label for="items-per-page">Items per page:</label>
-                <select id="items-per-page" style="margin-bottom: 15px;">
-                    <option value="5" selected>5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-                <!-- Sort dropdown -->
-                <select id="sort-options" class="sort-dropdown">
-                    <option value="">Sort By</option>
-                    <option value="price-asc">Starting Price: Low to High</option>
-                    <option value="price-desc">Starting Price: High to Low</option>
-                    <option value="bid-asc">Current Bid: Low to High</option>
-                    <option value="bid-desc">Current Bid: High to Low</option>
-                    <option value="time-asc">Time Remaining</option>
-                </select>
+    <a href="<?= $isLoggedIn ? 'sellerPage.html' : 'sellerLogin.html' ?>" class="create-listing"> <!--Create link for listings, redirect as appropriate-->
+      Create a listing
+    </a>
+  </div>
 
-                <!-- Department filter -->
-                <label for="department">Department</label>
-                <select id="department" name="department" class="id-dropdown">
-                    <option value="">Select a department</option>
-                    <option value="Books" <?= $selectedCategory === 'Books' ? 'selected' : '' ?>>Books</option>
-                    <option value="Clothing" <?= $selectedCategory === 'Clothing' ? 'selected' : '' ?>>Clothing</option>
-                    <option value="Computing" <?= $selectedCategory === 'Computing' ? 'selected' : '' ?>>Computing</option>
-                    <option value="DvDs" <?= $selectedCategory === 'DvDs' ? 'selected' : '' ?>>DvDs</option>
-                    <option value="Electronics" <?= $selectedCategory === 'Electronics' ? 'selected' : '' ?>>Electronics</option>
-                    <option value="Collectables" <?= $selectedCategory === 'Collectables' ? 'selected' : '' ?>>Collectables</option>
-                    <option value="Home & Garden" <?= $selectedCategory === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
-                    <option value="Music" <?= $selectedCategory === 'Music' ? 'selected' : '' ?>>Music</option>
-                    <option value="Outdoors" <?= $selectedCategory === 'Outdoors' ? 'selected' : '' ?>>Outdoors</option>
-                    <option value="Toys" <?= $selectedCategory === 'Toys' ? 'selected' : '' ?>>Toys</option>
-                    <option value="Sports Equipment" <?= $selectedCategory === 'Sports Equipment' ? 'selected' : '' ?>>Sports Equipment</option>
-                </select>
+  <!-- MAIN LAYOUT -->
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">
+        <a href="index.php"><img src="iBay-logo.png" alt="iBay logo"></a>
+      </div>
+    <!--Filters, advanced search and pagenation-->
+      <h3>Advanced Search</h3>
+      <label for="items-per-page">Items per page:</label>
+      <select id="items-per-page">
+        <option value="5" selected>5</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+      </select>
 
-                <!-- Price Range -->
-                <label for="price-range">Starting Price:</label>
-                <input type="text" id="price-range" readonly style="border:0;width:95%">
-                <div id="price-slider"></div>
+      <label for="sort-options">Sort By</label>
+      <select id="sort-options">
+        <option value="">—</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+        <option value="bid-asc">Bid ↑</option>
+        <option value="bid-desc">Bid ↓</option>
+        <option value="time-asc">Time Remaining</option>
+      </select>
 
-                <!-- Time remaining filter -->
-                <label for="time-remaining">Time Remaining (days)</label>
-                <input type="number" id="time-remaining" placeholder="Days remaining" min="1" class="time-box">
+      <label for="department">Department</label>
+      <select id="department">
+        <option value="">All</option>
+        <?php
+          $depts = ['Books','Clothing','Computing','DvDs','Electronics',
+                    'Collectables','Home & Garden','Music','Outdoors',
+                    'Toys','Sports Equipment'];
+          foreach($depts as $d) {
+            $sel = $selectedCategory === $d ? ' selected' : '';
+            echo "<option value=\"{$d}\"{$sel}>{$d}</option>";
+          }
+        ?>
+      </select>
 
-                <!-- Location filter -->
-                <label for="location">Postcode</label>
-                <input type="text" id="location" placeholder="Enter location" class ="postcode-box">
+      <label for="price-range">Starting Price:</label>
+      <input type="text" id="price-range" readonly>
+      <div id="price-slider"></div>
 
-                <!-- Free postage toggle -->
-                <label>
-                    <input type="checkbox" id="free-postage"> Free Postage
-                </label>
-                <button id="apply-filters">Apply Filters</button>
-            </div>
-        </div>
-        <!-- SEARCH & RESULTS -->
-        <div class="main-content">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="search-field" class="search-bar" placeholder="Search field">
-                <button id="search-button">Search</button>
-            </div>
-            <div id="pagination-container" class="pagination"></div>
-        </div>
-    </div>
-    
-    <!-- FOOTER -->        
-    <div class="footer">
-        Copyright @2025-25 iBay Inc. All rights reserved
+      <label for="time-remaining">Time Remaining (days):</label>
+      <input type="number" id="time-remaining" min="1" placeholder="e.g. 2">
+
+      <label for="location">Postcode</label>
+      <input type="text" id="location" placeholder="e.g. AB12 3CD">
+
+      <label><input type="checkbox" id="free-postage"> Free Postage</label>
+      <button id="apply-filters">Apply Filters</button>
     </div>
 
+    <div class="main-content">
+      <div class="search-bar-container" style="display:flex; width:100%; gap:8px; margin-bottom:16px;">
+        <input type="text" id="search-field" placeholder="Search…" style="flex:1; padding:8px;" /> <!--Free text search bar-->
+        <button id="search-button" style="padding:8px 16px;">Search</button>
+      </div>
+      <!--Pagenation buttons-->
+      <div id="pagination-container" class="pagination"></div>
+    </div>
+  </div>
+
+  <div class="footer">© 2025 iBay Inc. All rights reserved</div>
+
+  <script>
+  $(function(){
+    // Pre-select department if passed via URL
+    // Initialise price-range slider (0–5000) and set its display
+    // Hook all filter controls to performSearch()
+    const initialCategory = '<?= addslashes($selectedCategory) ?>';
+    if (initialCategory) $('#department').val(initialCategory);
+
+    $("#price-slider").slider({
+      range: true,
+      min: 0,
+      max: 5000,
+      values: [0,5000],
+      slide(_, ui){
+        $("#price-range").val(`£${ui.values[0]} - £${ui.values[1]}`);
+      }
+    });
+    const vals = $("#price-slider").slider("values");
+    $("#price-range").val(`£${vals[0]} - £${vals[1]}`);
+
+    $("#apply-filters, #search-button").on("click", ()=> performSearch(1));
+    $("#sort-options, #items-per-page").on("change", ()=> performSearch(1));
+
+    performSearch(); // Fetch & render first page of results
+  });
+
+  function performSearch(page=1) {
+    const params = { page };
+    const txt = $('#search-field').val().trim();
+    if (txt) params.searchText = txt;
+
+    const [minPrice, maxPrice] = $("#price-slider").slider("values");
+    if (minPrice>0||maxPrice<5000) {
+      params.minPrice = minPrice;
+      params.maxPrice = maxPrice;
+    }
+
+    const dept = $('#department').val(); if (dept) params.department = dept;
+    const days = $('#time-remaining').val(); if (days) params.timeRemaining = days;
+    const loc  = $('#location').val().trim(); if (loc) params.location = loc;
+    if ($('#free-postage').is(':checked')) params.freePostage = 1;
+    const sort = $('#sort-options').val(); if (sort) params.sortBy = sort;
+    const per  = parseInt($('#items-per-page').val(),10); if (per) params.perPage = per;
+    // Read all filter inputs (searchText, minPrice, maxPrice, department, etc.)
+    // Only add to params if the user has changed them from defaults
+    $.getJSON('search.php', params)
+      .done(data => { renderResults(data.items); renderPagination(data.page, data.total, data.perPage); })
+      .fail(() => { $('.main-content').html('<p>Error loading results.</p>'); });
+  }
+
+  function renderResults(items) {
+  // Clear old results
+  // If no items: show “No matching items found.”
+  // Otherwise, loop each item and build the HTML:
+  //    Thumbnail (<img src="data:…">)
+  //    Title link
+  //    Starting price, Current bid, postage, location, category, time remaining
+  //    Optional description block
+    const container = $(".main-content");
+    container.find(".search-results").remove();
+    const $results = $('<div class="search-results">');
+    if (!items.length) {
+      $results.append('<p>No matching items found.</p>');
+    } else {
+      items.forEach(item => {
+        const tm   = formatTime(item.time_remaining);
+        const img  = `<img src="${item.image}" alt="">`;
+        const desc = item.description ? `<div class="description">${item.description}</div>` : '';
+        $results.append(`
+          <div class="result-card">
+            ${img}
+            <div class="card-content">
+              <a href="itemDetails.php?id=${item.itemId}">
+                <h4>${item.title}</h4>
+              </a>
+              <div class="card-details">
+                <div class="price">Starting price: £${item.price}</div>
+                <div class="bid">Current bid: £${item.currentBid ?? item.price}</div>
+                <div class="postage">Postage: £${item.postage}</div>
+                <div class="location">Postcode: ${item.location}</div>
+                <div class="category">Category: ${item.category}</div>
+                <div class="time-remaining">${tm}</div>
+                ${desc}
+              </div>
+            </div>
+          </div>
+        `);
+      });
+    }
+    container.append($results);
+  }
+
+  function renderPagination(page, total, perPage) {
+    // Calculate totalPages = ceil(total / perPage)
+    // Render numbered buttons, disabling the current page
+    // Clicking a button calls performSearch(page)
+    const totalPages = Math.ceil(total / perPage);
+    const $p = $('#pagination-container').empty();
+    for (let i=1; i<= totalPages; i++) {
+      const $btn = $(`<button>${i}</button>`);
+      if (i===page) $btn.prop('disabled',true);
+      $btn.on('click', ()=> performSearch(i));
+      $p.append($btn);
+    }
+  }
+
+  function formatTime(sec) {
+    // Convert seconds to “Xd Xh Xm left”
+    const d = Math.floor(sec/86400),
+          h = Math.floor((sec%86400)/3600),
+          m = Math.floor((sec%3600)/60);
+    let s = '';
+    if (d) s+= `${d}d `;
+    if (h||d) s+= `${h}h `;
+    s+= `${m}m`;
+    return s + (s?' left':'');
+  }
+  </script>
 </body>
 </html>

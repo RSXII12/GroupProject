@@ -1,205 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add Listing</title>
-    <link rel="stylesheet" href="sellerPage.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Listing</title>
+  <link rel="stylesheet" href="sellerPage.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <!-- top nav/header -->
-    <div class="header">
-        <div class="header-left"><a href="index.php"><img src="iBay-logo.png" alt="iBay Logo"></a></div>
-        <div class="header-center">Create a new listing</div>
+  <div class="header">
+    <div class="header-left">
+      <a href="index.php"><img src="iBay-logo.png" alt="iBay Logo"></a>
+    </div>
+    <div class="header-center">Create a new listing</div>
+    <div class="header-right">
+      <a href="listingPage.php" class="nav-button">View My Listings</a>
+    </div>
+  </div>
 
-        <div class="header-right">
-            <a href="listingPage.php" class="nav-button">View My Listings</a>
+  <div class="form-container">
+    <form id="listing-form">
+      <div class="row">
+        <div class="form-group">
+          <label for="listingName">Listing Name</label>
+          <input type="text" id="listingName" name="listing-name" required />
+          <div class="error" id="listingNameError">Listing name must be at least 4 characters.</div>
         </div>
-    </div>
+        <div class="form-group">
+          <label for="department">Department</label>
+          <select id="department" name="department" required>
+            <option value="">Select a department</option>
+            <option>Books</option>
+            <option>Clothing</option>
+            <option>Computing</option>
+            <option>DvDs</option>
+            <option>Electronics</option>
+            <option>Collectables</option>
+            <option>Home & Garden</option>
+            <option>Music</option>
+            <option>Outdoors</option>
+            <option>Toys</option>
+            <option>Sports Equipment</option>
+          </select>
+          <div class="error" id="departmentError">Please select a department.</div>
+        </div>
+      </div>
 
-    <!-- listing form -->
-    <div class="form-container">
-        <form method="post" action="sellerPage.php" enctype="multipart/form-data" id="listing-form">
-            <!-- title + department -->
-            <div class="row">
-                <div class="form-group">
-                    <label for="listing-name">Listing Name</label>
-                    <input type="text" id="listing-name" name="listing-name" required />
-                    <div class="error" id="listingNameError">Listing name must be at least 4 characters.</div>
-                </div>
+      <div class="form-group">
+        <label for="description">Item Description (max 1000 characters)</label>
+        <textarea id="description" name="description" rows="4" maxlength="1000"></textarea>
+        <div id="desc-counter">0 / 1000</div>
+      </div>
 
-                <div class="form-group">
-                    <label for="department">Department</label>
-                    <select id="department" name="department" required>
-                        <option value="">Select a department</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Computing</option>
-                        <option>DvDs</option>
-                        <option>Electronics</option>
-                        <option>Collectables</option>
-                        <option>Home & Garden</option>
-                        <option>Music</option>
-                        <option>Outdoors</option>
-                        <option>Toys</option>
-                        <option>Sports Equipment</option>
-                    </select>
-                </div>
-            </div>
+      <div class="row">
+        <div class="form-group">
+          <label for="price">Starting Price (£)</label>
+          <input type="number" id="price" name="price" step="0.01" max="5000" required />
+          <div class="error" id="priceError">Price must be between £0 and £5000.</div>
+        </div>
+        <div class="form-group">
+          <label for="postageFee">Postage Fee (£)</label>
+          <input type="number" id="postageFee" name="postage-fee" step="0.01" required />
+          <div class="error" id="postageFeeError">Please enter a valid postage fee.</div>
+        </div>
+      </div>
 
-            <!-- description -->
-            <div class="form-group">
-                <label for="description">Item Description (max 1000 characters)</label>
-                <textarea id="description" name="description" rows="4" maxlength="1000"></textarea>
-                <div id="desc-counter">0 / 1000</div>
-            </div>
+      <div class="row">
+        <div class="form-group">
+          <label for="deadline">Listing Deadline</label>
+          <input type="datetime-local" id="deadline" name="deadline" required />
+          <div class="error" id="deadlineError">Please select a future deadline.</div>
+        </div>
+        <div class="form-group">
+          <label>Photos (1–2)</label>
+          <input type="file" id="photoInput" name="photo-input[]" accept="image/*" multiple required />
+          <div class="error" id="photoError">Please upload 1 or 2 photos.</div>
+          <div class="photo-preview" id="photo-preview"></div>
+        </div>
+      </div>
 
-            <!-- price + postage -->
-            <div class="row">
-                <div class="form-group">
-                    <label for="price"> Starting Price (£)</label>
-                    <input type="number" id="price" name="price" step="0.01" max="5000" required />
-                    <div class="error" id="priceError">Price must be between £0 and £5000.</div>
-                </div>
+      <button type="submit" class="button">Create Listing</button>
+    </form>
+  </div>
 
-                <div class="form-group">
-                    <label for="postage-fee">Postage Fee (£)</label>
-                    <input type="number" id="postage-fee" name="postage-fee" step="0.01" required />
-                    <div class="error" id="postageError">Please enter a valid postage fee.</div>
-                </div>
-            </div>
+  <div id="message-container"></div>
 
-            <!-- deadline + image upload -->
-            <div class="row">
-                <div class="form-group">
-                    <label for="deadline">Listing Deadline</label>
-                    <input type="datetime-local" id="deadline" name="deadline" required />
-                    <div class="error" id="deadlineError">Please select a deadline.</div>
-                </div>
+  <div class="footer">
+    © 2025 iBay Inc. All rights reserved
+  </div>
 
-                <div class="form-group">
-                    <label>Photos (Max 2)</label>
-                    <input type="file" id="photo-input" name="photo-input[]" accept="image/*" multiple required />
-                    <div class="photo-preview" id="photo-preview"></div>
-                </div>
-            </div>
+  <script>
+  $(function(){
+    $('.error').hide();// Hide all inline errors on load
 
-            <button type="submit" class="button">Create Listing</button>
-        </form>
-    </div>
+    // Set minimum allowable deadline to current time
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $('#deadline').attr('min', now.toISOString().slice(0,16));
 
-    <!-- messages shown after redirect -->
-    <div id="message-container"></div>
+    // Live character counter for description
+    $('#description').on('input', function() {
+      $('#desc-counter').text(`${this.value.length} / 1000`);
+    });
 
-    <div class="footer">
-        © 2025-25 iBay Inc. All rights reserved
-    </div>
+    // Photo preview and count validation
+    $('#photoInput').on('change', function() {
+      const files = this.files;
+      $('#photo-preview').empty();
+      if (files.length < 1 || files.length > 2) {
+        $('#photoError').show();
+      } else {
+        $('#photoError').hide();
+      }
+      if (files.length > 2) {
+        alert('Max 2 photos.');
+        $(this).val('');
+        return;
+      }// Render thumbnail previews
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => $('<img>').attr('src', e.target.result).appendTo('#photo-preview');
+        reader.readAsDataURL(file);
+      });
+    });
 
-    <script>
-        // show thumbnail previews
-        const photoInput = document.getElementById("photo-input");
-        const photoPreview = document.getElementById("photo-preview");
+    // Define validator functions for each field
+    const validators = {
+      listingName:   v => v.length >= 4,
+      department:    v => v.length < 1000,
+      price:         v => !isNaN(v) && v > 0 && v <= 5000,
+      postageFee:    v => !isNaN(v) && v >= 0,
+      deadline:      v => v && new Date(v).getTime() > Date.now(),
+      photoInput:    () => {
+        const n = $('#photoInput')[0].files.length;
+        return n >= 1 && n <= 2;
+      }
+    };
 
-        photoInput.addEventListener("change", function () {
-            photoPreview.innerHTML = "";
-            if (photoInput.files.length > 2) {
-                alert("You can only upload a maximum of 2 photos.");
-                photoInput.value = "";
-                return;
-            }
+    // Live validation on input/change
+    $.each(validators, (field, fn) => {
+      const sel = field==='photoInput'
+                ? '#photoInput'
+                : `#${field}`;
+      $(sel).on('input change', () => {
+        const val = field==='photoInput'
+                  ? null
+                  : $(sel).val().trim();
+        const ok = fn(val);
+        $(`#${field}Error`).toggle(!ok);
+      });
+    });
 
-            Array.from(photoInput.files).forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const img = document.createElement("img");
-                    img.src = e.target.result;
-                    photoPreview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-        document.addEventListener("DOMContentLoaded", () => {
-            const deadlineInput = document.getElementById("deadline");
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // handle timezone offset
-            deadlineInput.min = now.toISOString().slice(0,16);
-        });
-        const descInput = document.getElementById('description');
-        const descCounter = document.getElementById('desc-counter');
-
-        descInput.addEventListener('input', () => {
-            descCounter.textContent = `${descInput.value.length} / 1000`;
-        });
-        // client-side validation setup
-        const form = document.getElementById('listing-form');
-        const fields = {
-            'listing-name': {
-                el: document.getElementById('listing-name'),
-                error: document.getElementById('listingNameError'),
-                validate: val => val.length >= 4
-            },
-            'price': {
-                el: document.getElementById('price'),
-                error: document.getElementById('priceError'),
-                validate: val => !isNaN(val) && val > 0 && val <= 5000
-            },
-            'postage-fee': {
-                el: document.getElementById('postage-fee'),
-                error: document.getElementById('postageError'),
-                validate: val => !isNaN(val) && val >= 0
-            },
-            'deadline': {
-            el: document.getElementById('deadline'),
-            error: document.getElementById('deadlineError'),
-            validate: val => {
-                const selectedTime = new Date(val).getTime();
-                const now = new Date().getTime();
-                return val !== "" && selectedTime > now;
-            }
+    // Handle form submission via AJAX
+    $('#listing-form').on('submit', function(e) {
+      e.preventDefault();
+      let ok = true;
+      // Run all validators before sending
+      $.each(validators, (field, fn) => {
+        const sel = field==='photoInput'
+                  ? '#photoInput'
+                  : `#${field}`;
+        const val = field==='photoInput'
+                  ? null
+                  : $(sel).val().trim();
+        if (!fn(val)) {
+          $(`#${field}Error`).show();
+          ok = false;
         }
-            
-        };
+      });
+      if (!ok) return;
+      // Prepare form data for AJAX
+      const fd = new FormData(this);
+      $.ajax({
+        url: 'sellerPage.php',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        dataType: 'json'
+      })
+      .done(resp => {
+        if (resp.success) window.location.search='?success=1';
+        else $('#message-container').html(`<div class="error-message">${resp.error}</div>`);
+      })
+      .fail(() => $('#message-container').html('<div class="error-message">Server error.</div>'));
+    });
 
-        // live field checks
-        Object.values(fields).forEach(field => {
-            field.el.addEventListener('input', () => {
-                const value = field.el.value.trim();
-                if (field.validate(value)) {
-                    field.el.classList.add('valid');
-                    field.el.classList.remove('invalid');
-                    field.error.style.display = 'none';
-                } else {
-                    field.el.classList.remove('valid');
-                    field.el.classList.add('invalid');
-                    field.error.style.display = 'block';
-                }
-            });
-        });
-
-        // on form submit, validate everything
-        form.addEventListener('submit', (e) => {
-            let valid = true;
-            Object.values(fields).forEach(field => {
-                const value = field.el.value.trim();
-                if (!field.validate(value)) {
-                    field.el.classList.add('invalid');
-                    field.error.style.display = 'block';
-                    valid = false;
-                }
-            });
-            if (!valid) e.preventDefault();
-        });
-
-        // show success/error after redirect
-        const params = new URLSearchParams(window.location.search);
-        const messageContainer = document.getElementById("message-container");
-
-        if (params.has('success')) {
-            messageContainer.innerHTML = "<div class='success-message'>Your listing was successfully created.</div>";
-        }
-        if (params.has('error')) {
-            messageContainer.innerHTML = "<div class='error-message'>Listing creation failed.</div>";
-        }
-    </script>
+    // Display success message if redirected with ?success
+    if (new URLSearchParams(location.search).has('success')) {
+      $('#message-container').html('<div class="success-message">Listing created!</div>');
+    }
+  });
+  </script>
 </body>
 </html>

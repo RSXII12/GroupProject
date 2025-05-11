@@ -1,0 +1,162 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.header {
+    width: 100%;
+    background-color: #0056b3;
+    padding: 20px 0;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.header-left,
+.header-center,
+.header-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-left {
+    justify-content: flex-start;
+    padding-left: 3%;
+}
+
+.header-center {
+    justify-content: center;
+}
+
+.header-right {
+    justify-content: flex-end;
+    padding-right: 3%;
+}
+
+.nav-button {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 10px;
+    background-color: #ccc;
+    text-decoration: none;
+    color: black;
+    border-radius: 4px;
+}
+
+.nav-button:hover {
+    background-color: #999;
+}
+
+@media screen and (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-left,
+    .header-center,
+    .header-right {
+        justify-content: center;
+        padding: 10px 0;
+    }
+}
+
+img{
+    width: 30%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.form-container {
+    width: 600px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+}
+
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.row {
+    display: flex;
+    justify-content: space-between;
+}
+.row input {
+    width: auto;
+}
+
+.form-group {
+    flex: 1;
+    margin: 10px 0;
+}
+
+.button {
+    background-color: #ccc;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.cancel-button {
+    padding: 10px 16px;
+    background-color: #ccc;
+    text-decoration: none;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.cancel-button:hover {
+    background-color: #999;
+}
+
+.footer {
+    background: #2f64ad;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}

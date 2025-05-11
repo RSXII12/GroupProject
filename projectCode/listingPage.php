@@ -20,7 +20,7 @@ if ($conn->connect_error) {
 }
 
 // Remember to change so it isn't hard-coded
-$userId = '0079504835d'; 
+$userId = 'c53dd9ea5f7'; 
 
 // Handle deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
@@ -77,8 +77,21 @@ $stmt->close();
     <link rel="stylesheet" href="listingPage.css">
 </head>
 <body>
+    <div class="header">
+    <div class="header-left">
+        <a href="index.php"><img src="iBay-logo.png" alt="iBay Logo" /></a>
+    </div>
+    <div class="header-center">
+        My Listings
+    </div>
+    <div class="header-right">
+        <a href="sellerPage.html" class="nav-button">Create New Listing</a>
+    </div>
+</div>
     <div class="container">
-        <h2>Active Listings</h2>
+        <!-- Active Listings -->
+        <h2 class="section-title">Active Listings</h2>
+        <div class="scrollable-section">
         <?php
         $hasActive = false;
         foreach ($items as $item):
@@ -102,10 +115,7 @@ $stmt->close();
                     Category: <?= htmlspecialchars($item['category']) ?>
                 </div>
                 <div class="listing-actions">
-                    <!-- EDIT BUTTON -->
                     <a href="editItem.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
-
-                    <!-- DELETE BUTTON -->
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="delete_id" value="<?= $item['itemId'] ?>">
                         <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</button>
@@ -119,8 +129,11 @@ $stmt->close();
             echo "<p>No active listings.</p>";
         }
         ?>
+        </div>
 
-        <h2>Inactive Listings</h2>
+        <!-- Inactive Listings -->
+        <h2 class="section-title">Inactive Listings</h2>
+        <div class="scrollable-section">
         <?php
         $hasInactive = false;
         foreach ($items as $item):
@@ -144,10 +157,7 @@ $stmt->close();
                     Category: <?= htmlspecialchars($item['category']) ?>
                 </div>
                 <div class="listing-actions">
-                    <!-- EDIT BUTTON -->
                     <a href="itemDetails.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
-
-                    <!-- DELETE BUTTON -->
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="delete_id" value="<?= $item['itemId'] ?>">
                         <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this listing?');">Delete</button>
@@ -161,5 +171,9 @@ $stmt->close();
             echo "<p>No inactive listings.</p>";
         }
         ?>
+        </div>
+    </div>
+    <div class="footer">
+    © 2025-25 iBay Inc. All rights reserved
     </div>
 </body>

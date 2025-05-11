@@ -3,12 +3,17 @@ body {
     background-color: #f8f9fa;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; 
-    min-height: 75vh; 
+}
+
+html, body {
     margin: 0;
+    padding: 0;
+}
+
+.container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
 }
 
 .header {
@@ -19,7 +24,7 @@ body {
     font-size: 24px;
     font-weight: bold;
     display: flex;
-    justify-content: space-between; /* Distributes space between items */
+    justify-content: space-between;
     align-items: center;
     padding: 20px;
 }
@@ -27,7 +32,7 @@ body {
 .header-left,
 .header-center,
 .header-right {
-    flex: 1; /* Makes each section take equal space */
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -48,15 +53,13 @@ body {
 }
 
 .nav-button {
-    background-color: #ccc;
+    display: inline-block;
+    margin-left: 10px;
     padding: 10px;
-    border: none;
-    color: black;
+    background-color: #ccc;
     text-decoration: none;
+    color: black;
     border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .nav-button:hover {
@@ -92,9 +95,7 @@ img{
 
 }
 
-.form-group {
-    margin: 10px 0;
-}
+
 label {
     display: block;
     margin-bottom: 5px;
@@ -113,6 +114,11 @@ input, select, textarea {
     width: auto;
 }
 
+.form-group {
+    flex: 1;
+    margin: 10px 0;
+}
+
 .button {
     background-color: #ccc;
     padding: 10px;
@@ -121,11 +127,29 @@ input, select, textarea {
     width: 100%;
     text-align: center;
 }
-.photo-preview img {
-    max-width: 100px;
-    margin-right: 10px;
-    border-radius: 8px;
+
+.form-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
 }
+
+.cancel-button {
+    padding: 10px 16px;
+    background-color: #ccc;
+    text-decoration: none;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.cancel-button:hover {
+    background-color: #999;
+}
+
 .footer {
     background: #2f64ad;
     color: white;
@@ -135,10 +159,4 @@ input, select, textarea {
     position: absolute;
     bottom: 0;
     width: 100%;
-}
-
-.error {
-    display: none;
-    color: red;
-    font-size: 0.9em;
 }

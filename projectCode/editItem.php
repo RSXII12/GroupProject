@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = trim($_POST['price']);
     $postage = trim($_POST['postage']);
     // Allowed categories to select - must be updated when new categories are added or removed
-    $allowedCategories = ["Fashion", "Technology", "Home & Garden"];
+    $allowedCategories = ["Fashion", "Technology", "Home & Garden", "Sports", "Toys"];
 
     $errors = [];
 
@@ -63,6 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate numeric fields
     if (!is_numeric($price) || $price < 0) {
         $errors[] = "Price must be a valid non-negative number.";
+    }
+
+    if ($price > 5000) {
+        $errors[] = "Price must be less than £5000";
     }
 
     if (!is_numeric($postage) || $postage < 0) {
@@ -107,15 +111,23 @@ if (!$item) {
 }
 $stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Edit Item - <?= htmlspecialchars($item['title']) ?></title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="editItem.css">
 </head>
 <body>
+    <div class="header">
+    <div class="header-left">
+        <a href="index.php"><img src="iBay-logo.png" alt="iBay Logo" /></a>
+    </div>
+    <div class="header-center">
+        Edit Listings
+    </div>
+    <div class="header-right"></div>
+    </div>
     <div class="container">
         <h2>Edit Listing: <?= htmlspecialchars($item['title']) ?></h2>
 
@@ -128,25 +140,51 @@ $stmt->close();
         }
         ?>
 
-        <form action="" method="POST" onsubmit="return validateForm();">
-            <label for="title">Title:</label><br>
-            <input type="text" id="title" name="title" value="<?= htmlspecialchars($item['title']) ?>" required maxlength="100"><br><br>
+        <div class="form-container">
+    <form method="POST" onsubmit="return validateForm();">
+        <div class="row">
+            <div class="form-group">
+                <label for="title">Listing Name</label>
+                <input type="text" id="title" name="title" value="<?= htmlspecialchars($item['title']) ?>" required maxlength="100">
+            </div>
 
-            <label for="category">Category:</label><br>
-            <input type="text" id="category" name="category" value="<?= htmlspecialchars($item['category']) ?>" required maxlength="50"><br><br>
+            <div class="form-group">
+                <label for="category">Department</label>
+                <select id="category" name="category" required>
+                    <option value="">Select a department</option>
+                    <option <?= $item['category'] === 'Technology' ? 'selected' : '' ?>>Technology</option>
+                    <option <?= $item['category'] === 'Fashion' ? 'selected' : '' ?>>Fashion</option>
+                    <option <?= $item['category'] === 'Home & Garden' ? 'selected' : '' ?>>Home & Garden</option>
+                    <option <?= $item['category'] === 'Sports' ? 'selected' : '' ?>>Sports</option>
+                    <option <?= $item['category'] === 'Toys' ? 'selected' : '' ?>>Toys</option>
+                </select>
+            </div>
+        </div>
 
-            <label for="description">Description:</label><br>
-            <textarea id="description" name="description" required maxlength="1000"><?= htmlspecialchars(trim($item['description'])) ?></textarea><br><br>
+        <div class="form-group">
+            <label for="description">Item Description</label>
+            <textarea id="description" name="description" rows="4" required maxlength="1000"><?= htmlspecialchars(trim($item['description'])) ?></textarea>
+        </div>
 
-            <label for="price">Price (£):</label><br>
-            <input type="number" step="0.01" id="price" name="price" value="<?= htmlspecialchars(number_format($item['price'], 2, '.', '')) ?>" required min="0"><br><br>
+        <div class="row">
+            <div class="form-group">
+                <label for="price">Price (£)</label>
+                <input type="number" step="0.01" id="price" name="price" value="<?= htmlspecialchars(number_format($item['price'], 2, '.', '')) ?>" required min="0">
+            </div>
 
-            <label for="postage">Postage (£):</label><br>
-            <input type="number" step="0.01" id="postage" name="postage" value="<?= htmlspecialchars(number_format($item['postage'], 2, '.', '')) ?>" required min="0"><br><br>
+            <div class="form-group">
+                <label for="postage">Postage Fee (£)</label>
+                <input type="number" step="0.01" id="postage" name="postage" value="<?= htmlspecialchars(number_format($item['postage'], 2, '.', '')) ?>" required min="0">
+            </div>
+        </div>
 
-            <button type="submit">Save Changes</button>
-            <a href="listingPage.php">Cancel</a>
-        </form>
+        <div class="form-buttons">
+            <button type="submit" class="button">Save Changes</button>
+            <a href="listingPage.php" class="nav-button cancel-button">Cancel</a>
+        </div>
+    </form>
+</div>
+
     </div>
 
     <script>
@@ -172,5 +210,9 @@ $stmt->close();
             return true;
         }
     </script>
+
+    <div class="footer">
+    © 2025-25 iBay Inc. All rights reserved
+    </div>
 </body>
 </html>

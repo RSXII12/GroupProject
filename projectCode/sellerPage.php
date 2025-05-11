@@ -109,11 +109,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     throw new Exception("Failed to read image data for: $fileName");
                 }
 
-                $imageId = bin2hex(random_bytes(16));
+                
                 $number = $i + 1;
 
-                $imgStmt = $conn->prepare("INSERT INTO iBayImages (imageId, image, itemType, imageSize, itemId, number) VALUES (?, ?, ?, ?, ?, ?)");
-                $imgStmt->bind_param("sssdss", $imageId, $imageData, $listingDepartment, $fileSize, $listingId, $number);
+                $imgStmt = $conn->prepare("INSERT INTO iBayImages (imageId, image, itemType, imageSize, itemId, number) VALUES (UUID(), ?, ?, ?, ?, ?)");
+                $imgStmt->bind_param("ssdss", $imageData, $listingDepartment, $fileSize, $listingId, $number);
                 $imgStmt->execute();
                 $imgStmt->close();
             }

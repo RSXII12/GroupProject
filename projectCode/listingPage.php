@@ -177,8 +177,5 @@ $stmt->close();
     </div>
   </div>
 
-  <div class="footer">
-    © 2025 iBay Inc. All rights reserved
-  </div>
 </body>
 </html>

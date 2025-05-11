@@ -35,15 +35,16 @@ $stmt->close();
 
 // fetch seller postcode
 $stmt = $mysqli->prepare("
-    SELECT postcode
-    FROM iBayMembers
-    WHERE userId = ?
+    SELECT name, postcode
+      FROM iBayMembers
+     WHERE userId = ?
 ");
 $stmt->bind_param('s', $item['userId']);
 $stmt->execute();
 $res = $stmt->get_result();
 $member   = $res->fetch_assoc();
 $postcode = $member['postcode'] ?? '';
+$sellerName = $member['name'] ?? 'Unknown seller';
 $stmt->close();
 
 //  fetch images
@@ -228,6 +229,7 @@ $mysqli->close();
       <!-- DETAILS -->
       <div class="details">
         <h1><?php echo htmlspecialchars($item['title']); ?></h1>
+        <p><strong>Seller:</strong> <?= htmlspecialchars($sellerName) ?></p>
         <p><strong>Category:</strong> <?php echo htmlspecialchars($item['category']); ?></p>
         <p><strong>Starting Price:</strong> £<?php echo number_format($item['price'],2); ?></p>
         <p><strong>Current Bid:</strong> £<?php echo number_format($item['currentBid'],2); ?></p>

@@ -20,7 +20,7 @@ if ($conn->connect_error) {
 }
 
 // Remember to change so it isn't hard-coded
-$userId = 'c53dd9ea5f7'; 
+$userId = $_SESSION['userId'];
 
 // Handle deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {

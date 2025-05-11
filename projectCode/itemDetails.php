@@ -218,8 +218,10 @@ $mysqli->close(); // Close DB connection
             <img src="<?= $src ?>" alt="Item image <?= $i+1 ?>">
           </div>
         <?php endforeach; ?>
-        <button class="prev">&larr;</button>
-        <button class="next">&rarr;</button>
+        <?php if (count($images) === 2): ?>
+            <button class="prev">&larr;</button>
+            <button class="next">&rarr;</button>
+        <?php endif; ?>
       </div>
 
       <!-- DETAILS -->

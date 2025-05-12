@@ -139,7 +139,7 @@ $mysqli->close();
   <div class="header-left">
     <a href="index.php"><img src="iBay-logo.png" alt="iBay Logo"></a>
   </div>
-  <div class="header-center">Edit Listing</div>
+  <div class="header-center"></div>
 </div>
 
 <div class="form-container">

@@ -137,8 +137,6 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
           Category: <?= htmlspecialchars($item['category']) ?>
         </div>
         <div class="listing-actions">
-          <a href="editItem.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
-          <button class="delete-button">Delete</button>
         </div>
       </div>
       <?php endforeach; endif; ?>

@@ -17,7 +17,6 @@ if (!$data) {
     exit;
 }
 
-// FIXED: match the JS field name
 $itemId   = $data['itemId']  ?? '';
 $bidInput = $data['bid']     ?? '';
 

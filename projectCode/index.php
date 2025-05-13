@@ -1,5 +1,4 @@
 <?php
-// index.php
 session_start();
 // Determine "Sell" link based on login status
 $sellLink = isset($_SESSION['userId']) ? 'sellerPage.html' : 'sellerLogin.html';

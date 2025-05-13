@@ -1,5 +1,4 @@
 <?php
-// fetchItems.php
 session_start();
 header('Content-Type: application/json; charset=UTF-8');// Tell the client we’re returning JSON
 

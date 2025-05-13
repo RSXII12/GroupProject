@@ -1,5 +1,4 @@
 <?php
-// itemDetails.php
 // Ensure PHP uses UK time (BST/GMT)
 date_default_timezone_set('Europe/London');
 session_start();
@@ -24,7 +23,7 @@ if (! $mysqli->query("SET time_zone = '{$ukOffset}'")) {
     error_log("Failed to set MySQL time_zone: " . $mysqli->error);
 }
 
-// Fetch item metadata
+// Fetch item data
 $stmt = $mysqli->prepare(
     "SELECT userId, title, category, description, price, postage, i.start AS start, i.finish AS finish, currentBid
      FROM iBayItems i

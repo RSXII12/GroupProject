@@ -1,5 +1,4 @@
 <?php
-// editItem.php
 // Ensure PHP uses UK time (BST/GMT)
 date_default_timezone_set('Europe/London');
 session_start();

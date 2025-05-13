@@ -8,7 +8,7 @@ $selectedCategory = $_GET['category'] ?? '';//get selected category from url if 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>iBay Home</title>
+  <title>Search iBay</title>
   <link rel="stylesheet" href="buyerPage.css">
   <!-- jQuery & jQuery UI -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 

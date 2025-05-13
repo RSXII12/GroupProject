@@ -125,25 +125,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
 
         // Replace images if new ones provided
-        if ($ok && $newImages) {
-            $del = $mysqli->prepare("DELETE FROM iBayImages WHERE itemId=?");
-            $del->bind_param("s", $itemId);
-            $del->execute(); $del->close();
+        if ($ok && !empty($newImages)) {
+        $del = $mysqli->prepare("DELETE FROM iBayImages WHERE itemId=?");
+        $del->bind_param("s", $itemId);
+        $del->execute();
+        $del->close();
 
-            $ins = $mysqli->prepare(
-                "INSERT INTO iBayImages
-                 (imageId,image,itemId,imageSize,number)
-                 VALUES (UUID(),?,?,?,?)"
-            );
-            foreach ($newImages as $idx => $blob) {
-                $size = strlen($blob);
-                $num  = $idx + 1;
-                $ins->bind_param("bsii", $blob, $itemId, $size, $num);
-                $ins->send_long_data(0, $blob);
-                $ins->execute();
-            }
-            $ins->close();
+        $ins = $mysqli->prepare(
+            "INSERT INTO iBayImages
+            (imageId,image,itemId,imageSize,number)
+            VALUES (UUID(),?,?,?,?)"
+        );
+        foreach ($newImages as $idx => $blob) {
+            $size = strlen($blob);
+            $num  = $idx + 1;
+            $ins->bind_param("bsii", $blob, $itemId, $size, $num);
+            $ins->send_long_data(0, $blob);
+            $ins->execute();
         }
+        $ins->close();
+    }
 
         if ($isAjax) {
             echo json_encode(['success' => true]);
@@ -287,13 +288,13 @@ $(function(){
     price: v => !isNaN(v) && v > 0 && v <= 5000,
     postage: v => !isNaN(v) && v >= 0,
     images: () => {
-      const files = $('#images')[0].files;
-      if (files.length < 1 || files.length > 2) return false;
-      for (let f of files) {
-        if (!ALLOWED_TYPES.includes(f.type)) return false;
-      }
-      return true;
-    }
+    const files = $('#images')[0].files;
+    // zero files is OK now
+    if (files.length === 0) return true;
+    // otherwise enforce 1–2 and types
+    if (files.length > 2) return false;
+    return Array.from(files).every(f => ALLOWED_TYPES.includes(f.type));
+}
   };
 
   // live validation
@@ -303,28 +304,48 @@ $(function(){
   $('#postage').on('input', ()=> $('#postageError').toggle(!validators.postage($('#postage').val().trim())));
   
   $('#images').on('change', function() {
-    const preview = $('#photo-preview');
-    preview.empty();
+  const files   = this.files;
+  const preview = $('#photo-preview');
 
-    const files = this.files;
-    // validate count and type
-    if (files.length < 1 || files.length > 2 ||
-        Array.from(files).some(f => !ALLOWED_TYPES.includes(f.type))) {
-      $('#imagesError').show();
-      return;
-    } else {
-      $('#imagesError').hide();
-    }
+  // No files selected: leave existing preview intact, hide any errors
+  if (files.length === 0) {
+    $('#imagesError').hide();
+    return;
+  }
 
-    // render thumbnails
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => $('<img>').attr('src', e.target.result)
-                                   .css({ width: '100px', margin: '0 5px' })
-                                   .appendTo(preview);
-      reader.readAsDataURL(file);
-    });
+  // Files picked: clear out any old thumbnails (whether DB or prior preview)
+  preview.empty();
+
+  // Enforce 1–2 file count
+  if (files.length > 2) {
+    $('#imagesError')
+      .text('Please upload no more than 2 photos.')
+      .show();
+    return;
+  }
+
+  // Enforce allowed MIME types
+  const bad = Array.from(files).some(f => !ALLOWED_TYPES.includes(f.type));
+  if (bad) {
+    $('#imagesError')
+      .text('Only JPEG, PNG or WebP files allowed.')
+      .show();
+    return;
+  }
+
+  // All good — hide error and render new thumbnails
+  $('#imagesError').hide();
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      $('<img>')
+        .attr('src', e.target.result)
+        .css({ width: '100px', margin: '0 5px' })
+        .appendTo(preview);
+    };
+    reader.readAsDataURL(file);
   });
+});
 
   // form submission via AJAX
   $('#edit-form').on('submit', function(e){

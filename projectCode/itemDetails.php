@@ -195,24 +195,87 @@ $mysqli->close();
   <!-- SCRIPTS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    (function(){
-      fetch(
-        'https://nominatim.openstreetmap.org/search?format=json&postalcode=' +
-        encodeURIComponent("<?= addslashes($postcode) ?>") +
-        '&countrycodes=gb'
-      )
-      .then(r => r.json())
-      .then(data => {
-        if (!data.length) return;
-        const lat = parseFloat(data[0].lat),
-              lon = parseFloat(data[0].lon);
-        const map = L.map('map').setView([lat, lon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-        L.marker([lat, lon]).addTo(map);
-        L.circle([lat, lon], { radius: 1000 }).addTo(map);
+$(function(){
+  // Map init (unchanged) …
+  (function(){
+    fetch(
+      'https://nominatim.openstreetmap.org/search?format=json&postalcode=' +
+      encodeURIComponent("<?= addslashes($postcode) ?>") +
+      '&countrycodes=gb'
+    )
+    .then(r => r.json())
+    .then(data => {
+      if (!data.length) return;
+      const lat = parseFloat(data[0].lat),
+            lon = parseFloat(data[0].lon);
+      const map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      L.marker([lat, lon]).addTo(map);
+      L.circle([lat, lon], { radius: 1000 }).addTo(map);
+    })
+    .catch(console.error);
+  })();
+
+  // Inject server‐side data into JS
+  const USER_ID     = <?= json_encode($_SESSION['userId'] ?? '') ?>;
+  const SELLER_ID   = <?= json_encode($item['userId']) ?>;
+  const START_PRICE = <?= json_encode((float)$item['price']) ?>;
+  const CURRENT_BID = <?= json_encode((float)$item['currentBid']) ?>;
+  const FINISH_TIME = new Date(<?= json_encode($item['finish']) ?>);
+  const ITEM_ID     = <?= json_encode($itemId) ?>;
+
+  // Bid form logic
+  const form = $('form.bid');
+  function showMessage(msg, isError = true) {
+    $('#bid-message')
+      .text(msg)
+      .css('color', isError ? 'red' : 'green');
+  }
+
+  if (!USER_ID) {
+    form.find('input,button').prop('disabled', true);
+    showMessage('Please log in to bid.');
+  } else if (USER_ID === SELLER_ID) {
+    form.find('input,button').prop('disabled', true);
+    showMessage("You cannot bid on your own listing.");
+  } else {
+    form.on('submit', function(e){
+      e.preventDefault();
+      $('#bid-message').empty();
+      let bidVal = $('#bid').val().trim();
+      if (!/^\d+(\.\d{1,2})?$/.test(bidVal)) {
+        return showMessage("Enter a valid amount up to two decimals.");
+      }
+      bidVal = parseFloat(bidVal);
+      if (new Date() > FINISH_TIME) {
+        return showMessage("Auction has ended.");
+      }
+      const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
+      if (bidVal < minAllowed) {
+        return showMessage(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
+      }
+
+      // Submit via AJAX JSON
+      $.ajax({
+        url: 'placeBid.php',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({ itemId: ITEM_ID, bid: bidVal })
       })
-      .catch(console.error);
-    })();
-  </script>
+      .done(resp => {
+        if (resp.success) {
+          $('#current-bid').text(resp.newBid.toFixed(2));
+          showMessage("Bid placed!", false);
+          $('#bid').val('');
+        } else {
+          showMessage(resp.error);
+        }
+      })
+      .fail(() => showMessage("Server error. Try again later."));
+    });
+  }
+});
+</script>
 </body>
 </html>

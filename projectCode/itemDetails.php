@@ -254,7 +254,16 @@ $mysqli->close();
       )
       .then(r => r.json())
       .then(data => {
-        if (!data.length) return;
+
+
+        if (!data.length) {
+      // show error instead of a blank map
+      $('#map').html(
+        '<p style="color:red; text-align:center; padding:1em;">' +
+        'Sorry, we couldn’t locate this postcode on the map.' +
+        '</p>'
+      );
+      return;}
         const lat = parseFloat(data[0].lat),
               lon = parseFloat(data[0].lon);
         const map = L.map('map').setView([lat, lon], 13);
@@ -262,7 +271,13 @@ $mysqli->close();
         L.marker([lat, lon]).addTo(map);
         L.circle([lat, lon], { radius: 1000 }).addTo(map);
       })
-      .catch(console.error);
+      .catch(err => {
+    $('#map').html(
+      '<p style="color:red; text-align:center; padding:1em;">' +
+      'Unable to load map: ' + err.message +
+      '</p>'
+    );
+    console.error(err);});
     })();
 
     // Inject server-side data into JS

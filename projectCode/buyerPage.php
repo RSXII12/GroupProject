@@ -64,8 +64,8 @@ $selectedCategory = $_GET['category'] ?? '';//get selected category from url if 
         <?php
           $depts = ['Books','Clothing','Computing','DvDs','Electronics',
                     'Collectables','Home & Garden','Music','Outdoors',
-                    'Toys','Sports Equipment'];
-          foreach($depts as $d) {
+                    'Toys','Sports Equipment'];//allowed departments
+          foreach($depts as $d) {//generate from list of allowed departments 
             $sel = $selectedCategory === $d ? ' selected' : '';
             echo "<option value=\"{$d}\"{$sel}>{$d}</option>";
           }

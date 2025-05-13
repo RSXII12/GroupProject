@@ -102,7 +102,8 @@ $inactive = array_filter($items, fn($it) => strtotime($it['finish']) <= $now);
              ? 'data:image/jpeg;base64,'.base64_encode($item['primaryImage'])
              : 'placeholder.jpg';
       ?>
-      <div class="listing-card" data-id="<?= htmlspecialchars($item['itemId']) ?>">
+      <!-- create item cards using php + html -->
+      <div class="listing-card" data-id="<?= htmlspecialchars($item['itemId']) ?>"> 
         <div class="listing-image"><img src="<?= $img ?>" alt=""></div>
         <div class="listing-info">
           <strong><?= htmlspecialchars($item['title']) ?></strong><br>
@@ -110,13 +111,14 @@ $inactive = array_filter($items, fn($it) => strtotime($it['finish']) <= $now);
           Category: <?= htmlspecialchars($item['category']) ?>
         </div>
         <div class="listing-actions">
-          <a href="editItem.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a>
+          <a href="editItem.php?id=<?= $item['itemId'] ?>" class="edit-button">Edit</a><!--redirect to edit page on click-->
           <button class="delete-button">Delete</button>
         </div>
       </div>
       <?php endforeach; endif; ?>
     </div>
 
+    <!-- same for expired listings, but dissallow actions -->
     <h2 class="section-title">Expired Listings</h2>
     <div id="inactive-listings" class="scrollable-section">
       <?php if (empty($inactive)): ?>
@@ -141,11 +143,11 @@ $inactive = array_filter($items, fn($it) => strtotime($it['finish']) <= $now);
 
   <script>
   $(function() {
-    $('.scrollable-section').on('click', '.delete-button', function() {
+    $('.scrollable-section').on('click', '.delete-button', function() {//when delete button clicked:
       const card = $(this).closest('.listing-card');
       const id   = card.data('id');
       if (!confirm('Delete this listing?')) return;
-      $.ajax({
+      $.ajax({//call self to delte items
         url: 'listingPage.php',
         type: 'POST',
         contentType: 'application/json; charset=utf-8',

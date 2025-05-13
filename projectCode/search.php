@@ -1,5 +1,4 @@
 <?php
-// search.php
 session_start();
 header('Content-Type: application/json'); // Return JSON responses
 
@@ -156,7 +155,7 @@ if ($where) {
 $countStmt->execute();
 $total = $countStmt->get_result()->fetch_assoc()['total'];
 
-echo json_encode([
+echo json_encode([//echo json back to buyerPage
     'items'   => $items,
     'total'   => intval($total),
     'page'    => $page,

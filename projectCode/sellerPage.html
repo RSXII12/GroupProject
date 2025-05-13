@@ -152,7 +152,7 @@
     });
 
     // Handle form submission via AJAX
-    $('#listing-form').on('submit', function(e) {
+    $('#listing-form').on('submit', function(e) {//intercept submission
       e.preventDefault();
       let ok = true;
       // Run all validators before sending
@@ -170,8 +170,8 @@
       });
       if (!ok) return;
       // Prepare form data for AJAX
-      const fd = new FormData(this);
-      $.ajax({
+      const fd = new FormData(this);//gather data
+      $.ajax({//process with ajax
         url: 'sellerPage.php',
         type: 'POST',
         data: fd,

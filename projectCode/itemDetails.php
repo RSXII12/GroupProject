@@ -293,15 +293,17 @@ $mysqli->close();
     function showMessage(msg, isError = true) {
       $('#bid-message').text(msg).css('color', isError ? 'red' : 'green');
     }
-
+    //conditionally disable input buttons
     if (!USER_ID) {
       form.find('input,button').prop('disabled', true);
       showMessage('Please log in to bid.');
     } else if (USER_ID === SELLER_ID) {
       form.find('input,button').prop('disabled', true);
       showMessage("You cannot bid on your own listing.");
+    
     } else {
-      form.on('submit', function(e){
+      //validate on bid
+      form.on('submit', function(e){//intercept submission so it can be processed with ajax
         e.preventDefault();
         $('#bid-message').empty();
         let bidVal = $('#bid').val().trim();

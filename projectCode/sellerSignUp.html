@@ -60,7 +60,7 @@
             username: v => v.length >= 4,
             password: v => v.length >= 4,
             address:  v => v.length >= 5,
-            postcode: v => /^[A-Z0-9 ]{5,8}$/i.test(v)
+            postcode: v => /^[A-Z0-9 ]{5,8}$/i.test(v)//regex to test postcode
         };
 
         // Real-time validation on text inputs

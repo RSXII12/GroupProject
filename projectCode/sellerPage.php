@@ -91,7 +91,7 @@ try {
     }
 
     // Prepare DB connection
-    $servername = "sci-project.lboro.ac.uk";
+$servername = "sci-project.lboro.ac.uk";
 $username   = "295group6";
 $password   = "wHiuTatMrdizq3JfNeAH";
 $dbname     = "295group6";

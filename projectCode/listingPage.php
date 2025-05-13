@@ -1,7 +1,9 @@
 <?php
 // listingPage.php
+// Ensure PHP uses UK time (BST/GMT)
+date_default_timezone_set('Europe/London');
 session_start();
-header('Content-Type: text/html; charset=UTF-8');// Declare that this script outputs HTML
+header('Content-Type: text/html; charset=UTF-8');
 
 $servername = "sci-project.lboro.ac.uk";
 $username   = "295group6";
@@ -10,60 +12,64 @@ $dbname     = "295group6";
 
 $mysqli = new mysqli($servername, $username, $password, $dbname);
 if ($mysqli->connect_error) {
-    die("DB connection failed: " . $mysqli->connect_error);// If connection fails, stop execution
+    die("DB connection failed: " . $mysqli->connect_error);
+}
+
+// Force MySQL session to UK local time (BST/GMT)
+$ukOffset = date('P');
+if (! $mysqli->query("SET time_zone = '{$ukOffset}'")) {
+    error_log("Failed to set MySQL time_zone: " . $mysqli->error);
 }
 
 $userId = $_SESSION['userId'] ?? null;
 if (!$userId) {
     header("Location: sellerLogin.html");
-    exit;// Redirect guests to login page
+    exit;
 }
 
 // AJAX deletion
-if ($_SERVER['REQUEST_METHOD']==='POST' &&
-    stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json')!==false
-) {// Parse JSON body for delete request
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false
+) {
     $data = json_decode(file_get_contents('php://input'), true);
     $deleteId = $data['delete_id'] ?? '';
-    if (!preg_match('/^[a-z0-9]+$/i',$deleteId)) {// Validate format of itemId
-        http_response_code(400);
-        echo json_encode(['success'=>false,'error'=>'Invalid ID']);
-        exit;
-    }
-    $stmt = $mysqli->prepare("DELETE FROM iBayImages WHERE itemId=?");// Delete associated images
-    $stmt->bind_param('s',$deleteId);
-    $stmt->execute(); $stmt->close();
-    $stmt = $mysqli->prepare("DELETE FROM iBayItems WHERE itemId=? AND userId=?");// Delete the item itself if it belongs to this seller
-    $stmt->bind_param('ss',$deleteId,$userId);
+    // delete images then item
+    $stmt = $mysqli->prepare("DELETE FROM iBayImages WHERE itemId = ?");
+    $stmt->bind_param('s', $deleteId);
     $stmt->execute();
-    $ok = $stmt->affected_rows>0;
     $stmt->close();
-    echo json_encode(['success'=>$ok]);// Return JSON indicating success/failure
+
+    $stmt = $mysqli->prepare("DELETE FROM iBayItems WHERE itemId = ? AND userId = ?");
+    $stmt->bind_param('ss', $deleteId, $userId);
+    $stmt->execute();
+    $ok = $stmt->affected_rows > 0;
+    $stmt->close();
+
+    echo json_encode(['success' => $ok]);
     exit;
 }
 
 // Fetch all listings
-$stmt = $mysqli->prepare("
-  SELECT i.itemId,i.title,i.price,i.category,i.finish,
-    (SELECT img.image FROM iBayImages img
-     WHERE img.itemId=i.itemId
-     ORDER BY img.number ASC LIMIT 1
-    ) AS primaryImage
-  FROM iBayItems i
-  WHERE i.userId=?
-  ORDER BY i.finish DESC
-");
-$stmt->bind_param('s',$userId);
+$stmt = $mysqli->prepare(
+    "SELECT i.itemId, i.title, i.price, i.category, i.finish,
+            (SELECT img.image FROM iBayImages img
+             WHERE img.itemId = i.itemId
+             ORDER BY img.number ASC LIMIT 1) AS primaryImage
+     FROM iBayItems i
+     WHERE i.userId = ?
+     ORDER BY i.finish DESC"
+);
+$stmt->bind_param('s', $userId);
 $stmt->execute();
 $result = $stmt->get_result();
-$items = $result->fetch_all(MYSQLI_ASSOC);// Fetch all rows into an associative array
+$items = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 $mysqli->close();
 
-// Separate into active/inactive
+// Separate active/inactive based on UK-time adjusted finish
 $now = time();
-$active = array_filter($items, fn($it)=>strtotime($it['finish']) > $now);
-$inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
+$active   = array_filter($items, fn($it) => strtotime($it['finish']) > $now);
+$inactive = array_filter($items, fn($it) => strtotime($it['finish']) <= $now);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,17 +79,8 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
   <title>Seller Listings</title>
   <link rel="stylesheet" href="listingPage.css">
   <style>
-    /* fix header to top */
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1000;
-    }
-    .container {
-      margin-top: 80px; /* adjust if header taller */
-    }
+    .header { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; }
+    .container { margin-top: 80px; }
   </style>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -100,7 +97,7 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
     <div id="active-listings" class="scrollable-section">
       <?php if (empty($active)): ?>
         <p>No active listings.</p>
-      <?php else: foreach($active as $item):
+      <?php else: foreach ($active as $item):
         $img = $item['primaryImage']
              ? 'data:image/jpeg;base64,'.base64_encode($item['primaryImage'])
              : 'placeholder.jpg';
@@ -109,7 +106,7 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
         <div class="listing-image"><img src="<?= $img ?>" alt=""></div>
         <div class="listing-info">
           <strong><?= htmlspecialchars($item['title']) ?></strong><br>
-          £<?= number_format($item['price'],2) ?><br>
+          £<?= number_format($item['price'], 2) ?><br>
           Category: <?= htmlspecialchars($item['category']) ?>
         </div>
         <div class="listing-actions">
@@ -124,7 +121,7 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
     <div id="inactive-listings" class="scrollable-section">
       <?php if (empty($inactive)): ?>
         <p>No expired listings.</p>
-      <?php else: foreach($inactive as $item):
+      <?php else: foreach ($inactive as $item):
         $img = $item['primaryImage']
              ? 'data:image/jpeg;base64,'.base64_encode($item['primaryImage'])
              : 'placeholder.jpg';
@@ -133,10 +130,8 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
         <div class="listing-image"><img src="<?= $img ?>" alt=""></div>
         <div class="listing-info">
           <strong><?= htmlspecialchars($item['title']) ?></strong><br>
-          £<?= number_format($item['price'],2) ?> (Expired)<br>
+          £<?= number_format($item['price'], 2) ?> (Expired)<br>
           Category: <?= htmlspecialchars($item['category']) ?>
-        </div>
-        <div class="listing-actions">
         </div>
       </div>
       <?php endforeach; endif; ?>
@@ -145,26 +140,23 @@ $inactive = array_filter($items, fn($it)=>strtotime($it['finish']) <= $now);
   </div>
 
   <script>
-  $(function(){
-    // Delegate click handler for delete buttons
-    $('.scrollable-section').on('click','.delete-button',function(){
+  $(function() {
+    $('.scrollable-section').on('click', '.delete-button', function() {
       const card = $(this).closest('.listing-card');
-      const id = card.data('id');
+      const id   = card.data('id');
       if (!confirm('Delete this listing?')) return;
       $.ajax({
-        // Send JSON via POST to same page
         url: 'listingPage.php',
         type: 'POST',
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         data: JSON.stringify({ delete_id: id })
       })
-      .done(resp=>{
-        if (resp.success) card.slideUp(300,()=>card.remove());
-        // Animate removal of card
+      .done(resp => {
+        if (resp.success) card.slideUp(300, () => card.remove());
         else alert('Delete failed.');
       })
-      .fail(()=>alert('Server error.'));
+      .fail(() => alert('Server error.'));
     });
   });
   </script>

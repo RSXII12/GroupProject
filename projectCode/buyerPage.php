@@ -205,6 +205,8 @@ $selectedCategory = $_GET['category'] ?? '';//get selected category from url if 
   }
 
   function formatTime(sec) {
+    sec = sec -3600 //dealing with DST is awful and I just want the format to be correct :( 
+    // -this is a bandaid fix because I only noticed the time discrepancies one day before deadline
     // Convert seconds to “Xd Xh Xm left”
     const d = Math.floor(sec/86400),
           h = Math.floor((sec%86400)/3600),

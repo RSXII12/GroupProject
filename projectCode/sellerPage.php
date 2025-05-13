@@ -1,36 +1,39 @@
 <?php
 // sellerPage.php
-header('Content-Type: application/json');
+// Ensure PHP uses UK time (BST/GMT)
+date_default_timezone_set('Europe/London');
 session_start();
+header('Content-Type: application/json');
 
-// require login
+// Require login
 if (!isset($_SESSION['userId'])) {
-    http_response_code(401);// Must be logged in
-    echo json_encode(['success'=>false,'error'=>'Not authenticated.']);
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Not authenticated.']);
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {// Only accept POST requests
+// Only accept POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success'=>false,'error'=>'Invalid request method.']);
+    echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
     exit;
 }
 
-// grab & sanitize inputs
-$name       = trim($_POST['listing-name']   ?? '');
-$dept       = trim($_POST['department']     ?? '');
-$desc       = trim($_POST['description']    ?? '');
-$price      = trim($_POST['price']          ?? '');
-$postage    = trim($_POST['postage-fee']    ?? '');
-$deadline   = $_POST['deadline']            ?? '';
-$files      = $_FILES['photo-input']        ?? [];
-$userId     = $_SESSION['userId'];
-$itemId     = md5(uniqid('', true));// Generate unique item ID
+// Grab & sanitize inputs
+$name        = trim($_POST['listing-name'] ?? '');
+$dept        = trim($_POST['department']   ?? '');
+$desc        = trim($_POST['description']  ?? '');
+$price       = trim($_POST['price']        ?? '');
+$postage     = trim($_POST['postage-fee']  ?? '');
+$deadlineStr = $_POST['deadline']          ?? '';
+$files       = $_FILES['photo-input']      ?? [];
+$userId      = $_SESSION['userId'];
+$itemId      = md5(uniqid('', true));
 
 $validDepts = ['Books','Clothing','Computing','DvDs','Electronics','Collectables','Home & Garden','Music','Outdoors','Toys','Sports Equipment'];
 
 try {
-    // server‐side validation
+    // Server-side validation
     if (strlen($name) < 4) {
         throw new Exception('Listing name must be at least 4 characters.');
     }
@@ -46,16 +49,26 @@ try {
     if (!is_numeric($postage) || $postage < 0) {
         throw new Exception('Postage fee must be zero or positive.');
     }
-    $deadlineTs = strtotime($deadline);
-    if (!$deadlineTs || $deadlineTs <= time()) {
+
+    // Parse and validate deadline in Europe/London timezone
+    $dt = DateTimeImmutable::createFromFormat(
+        'Y-m-d\TH:i',
+        $deadlineStr,
+        new DateTimeZone('Europe/London')
+    );
+    if (! $dt) {
+        throw new Exception('Deadline must be in valid YYYY-MM-DDTHH:MM format.');
+    }
+    $deadlineTs = $dt->getTimestamp();
+    if ($deadlineTs <= time()) {
         throw new Exception('Deadline must be a valid future date/time.');
     }
 
-    // require at least one image
+    // Require at least one image
     if (empty($files['name'][0])) {
         throw new Exception('You must upload at least one photo.');
     }
-    // validate image count
+    // Validate image count
     $count = count($files['name']);
     if ($count < 1 || $count > 2) {
         throw new Exception('Please upload 1 or 2 photos.');
@@ -77,27 +90,51 @@ try {
         }
     }
 
-    // prepare DB
-    $conn = new mysqli("sci-project.lboro.ac.uk","295group6","wHiuTatMrdizq3JfNeAH","295group6");
+    // Prepare DB connection
+    $conn = new mysqli(
+        'sci-project.lboro.ac.uk',
+        '295group6',
+        'wHiuTatMrdizq3JfNeAH',
+        '295group6'
+    );
     if ($conn->connect_error) {
-        error_log('DB connect failed: '.$conn->connect_error);
+        error_log('DB connect failed: ' . $conn->connect_error);
         throw new Exception('Internal server error.');
     }
+
+    // Force MySQL session to UK local time (BST/GMT)
+    $ukOffset = date('P');
+    if (! $conn->query("SET time_zone = '{$ukOffset}'")) {
+        error_log("Failed to set MySQL time_zone: " . $conn->error);
+    }
+
     $conn->begin_transaction();
 
-    // insert listing
+    // Insert listing with explicit UK-local timestamps
     $start  = date('Y-m-d H:i:s');
-    $finish = date('Y-m-d H:i:s', $deadlineTs);
+    $finish = $dt->format('Y-m-d H:i:s');
+
     $stmt = $conn->prepare(
         "INSERT INTO iBayItems
          (itemId,userId,title,category,description,price,postage,start,finish)
          VALUES (?,?,?,?,?,?,?,?,?)"
     );
-    $stmt->bind_param('sssssssss', $itemId,$userId,$name,$dept,$desc,$price,$postage,$start,$finish);
+    $stmt->bind_param(
+        'sssssssss',
+        $itemId,
+        $userId,
+        $name,
+        $dept,
+        $desc,
+        $price,
+        $postage,
+        $start,
+        $finish
+    );
     $stmt->execute();
     $stmt->close();
 
-    // insert images
+    // Insert images
     for ($i = 0; $i < $count; $i++) {
         $data = file_get_contents($files['tmp_name'][$i]);
         $num  = $i + 1;
@@ -106,23 +143,22 @@ try {
              (imageId,image,itemType,imageSize,itemId,number)
              VALUES (UUID(),?,?,?,?,?)"
         );
-        // Bind blob + other fields
-        $stmt->bind_param('bisss', $data,$dept,$files['size'][$i],$itemId,$num);
+        $stmt->bind_param('bisss', $data, $dept, $files['size'][$i], $itemId, $num);
         $stmt->send_long_data(0, $data);
         $stmt->execute();
         $stmt->close();
     }
 
-    $conn->commit();// Commit transaction and return success
-    echo json_encode(['success'=>true]);
+    $conn->commit();
+    echo json_encode(['success' => true]);
     $conn->close();
 
-} catch (Exception $e) {// Roll back on any error
+} catch (Exception $e) {
     if (!empty($conn) && $conn->in_transaction) {
         $conn->rollback();
         $conn->close();
     }
-    http_response_code(422);// Unprocessable Entity
-    echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+    http_response_code(422);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?>

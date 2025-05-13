@@ -1,25 +1,54 @@
 <?php
-session_start(); //resume session
+// editItem.php
+// Ensure PHP uses UK time (BST/GMT)
+date_default_timezone_set('Europe/London');
+session_start();
 
-// DB connection
+// Determine if AJAX JSON
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+          strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+if ($isAjax) {
+    header('Content-Type: application/json');
+} else {
+    header('Content-Type: text/html; charset=UTF-8');
+}
+
+// Database connection
 $servername = "sci-project.lboro.ac.uk";
 $username   = "295group6";
 $password   = "wHiuTatMrdizq3JfNeAH";
 $dbname     = "295group6";
 
-$mysqli = new mysqli($servername, $username, $password, $dbname); //db connection
+$mysqli = new mysqli($servername, $username, $password, $dbname);
 if ($mysqli->connect_error) {
-    http_response_code(500); //return 500 error if no connection
-    echo json_encode(['success'=>false,'error'=>'Database connection failed.']);
+    if ($isAjax) {
+        http_response_code(500);
+        echo json_encode(['success'=>false,'error'=>'Database connection failed.']);
+    } else {
+        die("DB connection failed: " . $mysqli->connect_error);
+    }
     exit;
 }
 
-if (!isset($_GET['id']) && !isset($_POST['itemId'])) { //check for id in url and return error if not exists
-    die("No item ID specified.");
+// Force MySQL session to UK local time
+$ukOffset = date('P');
+if (! $mysqli->query("SET time_zone = '{$ukOffset}'")) {
+    error_log("Failed to set MySQL time_zone: " . $mysqli->error);
+}
+
+// Identify itemId from GET or POST
+if (!isset($_GET['id']) && !isset($_POST['itemId'])) {
+    if ($isAjax) {
+        http_response_code(400);
+        echo json_encode(['success'=>false,'error'=>'No item ID specified.']);
+    } else {
+        die("No item ID specified.");
+    }
+    exit;
 }
 $itemId = $_GET['id'] ?? $_POST['itemId'];
 
-// fetch existing images for display
+// Fetch existing images
 $stmt = $mysqli->prepare("SELECT imageId, image FROM iBayImages WHERE itemId = ? ORDER BY number");
 $stmt->bind_param("s", $itemId);
 $stmt->execute();
@@ -30,14 +59,9 @@ while ($row = $res->fetch_assoc()) {
 }
 $stmt->close();
 
-$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-          strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-
 $errors = [];
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Read & sanitize all inputs: title, category, description, price, postage
-    // Define allowed categories array
+    // Read & sanitize inputs
     $title       = trim($_POST['title'] ?? '');
     $category    = trim($_POST['category'] ?? '');
     $description = trim($_POST['description'] ?? '');
@@ -47,54 +71,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           'Collectables','Home & Garden','Music','Outdoors',
                           'Toys','Sports Equipment'];
 
-    // Validate:
-    //  Title is at least 4 chars
-    //  Category is in the allowed list
-    //  Description is less than 1000 characters
-    //  Price and postage are numeric & within bounds
-    if (strlen($title) < 4) $errors[] = "Title must be at least 4 characters.";
-    if (!in_array($category, $allowedCategories)) $errors[] = "Please select a valid category.";
-    if (strlen($description) >1000) $errors[] = "Description is too long.";
-    if (!is_numeric($price)||$price<0||$price>5000) $errors[] = "Price must be between £0 and £5000.";
-    if (!is_numeric($postage)||$postage<0) $errors[] = "Postage must be a non-negative number.";
+    // Validate fields
+    if (strlen($title) < 4) {
+        $errors[] = "Title must be at least 4 characters.";
+    }
+    if (!in_array($category, $allowedCategories, true)) {
+        $errors[] = "Please select a valid category.";
+    }
+    if (strlen($description) > 1000) {
+        $errors[] = "Description is too long.";
+    }
+    if (!is_numeric($price) || $price < 0 || $price > 5000) {
+        $errors[] = "Price must be between £0 and £5000.";
+    }
+    if (!is_numeric($postage) || $postage < 0) {
+        $errors[] = "Postage must be a non-negative number.";
+    }
 
-     // If any new images were selected:
-    //  Ensure max 2 files
-    //  Read each into $newImages[]
+    // Handle new images
     $newImages = [];
     if (!empty($_FILES['images']['name'][0])) {
         $count = count($_FILES['images']['name']);
-        if ($count > 2) $errors[] = "You can only upload up to 2 photos.";
-        else {
+        if ($count > 2) {
+            $errors[] = "You can only upload up to 2 photos.";
+        } else {
             for ($i = 0; $i < $count; $i++) {
                 if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
                     $newImages[] = file_get_contents($_FILES['images']['tmp_name'][$i]);
                 } else {
-                    $errors[] = "Error uploading image #".($i+1);
+                    $errors[] = "Error uploading image #" . ($i + 1) . ".";
                 }
             }
         }
     }
 
-    if (!$errors) {
-        // If validation passed, update the iBayItems row
-        $stmt = $mysqli->prepare("UPDATE iBayItems SET title=?, category=?, description=?, price=?, postage=? WHERE itemId=?");
+    if (empty($errors)) {
+        // Update listing
+        $stmt = $mysqli->prepare(
+            "UPDATE iBayItems
+             SET title=?, category=?, description=?, price=?, postage=?
+             WHERE itemId=?"
+        );
         $stmt->bind_param("sssdds", $title, $category, $description, $price, $postage, $itemId);
         $ok = $stmt->execute();
         $stmt->close();
 
+        // Replace images if new ones provided
         if ($ok && $newImages) {
-             // If there are new images:
-             //  Delete old rows from iBayImages
-             //  Insert each new blob 
             $del = $mysqli->prepare("DELETE FROM iBayImages WHERE itemId=?");
             $del->bind_param("s", $itemId);
             $del->execute(); $del->close();
 
-            $ins = $mysqli->prepare("INSERT INTO iBayImages (imageId,image,itemId,imageSize,number) VALUES (UUID(),?,?,?,?)");
+            $ins = $mysqli->prepare(
+                "INSERT INTO iBayImages
+                 (imageId,image,itemId,imageSize,number)
+                 VALUES (UUID(),?,?,?,?)"
+            );
             foreach ($newImages as $idx => $blob) {
                 $size = strlen($blob);
-                $num  = $idx+1;
+                $num  = $idx + 1;
                 $ins->bind_param("bsii", $blob, $itemId, $size, $num);
                 $ins->send_long_data(0, $blob);
                 $ins->execute();
@@ -103,20 +138,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($isAjax) {
-            echo json_encode(['success'=>true]);// Echo JSON { success: true/false, errors: [...] }
-            exit;
+            echo json_encode(['success' => true]);
         } else {
-            header("Location: listingPage.php?success=1");// Redirect back to listingPage.php or editItem.php with success flag
-            exit;
+            header("Location: listingPage.php?success=1");
         }
+        exit;
     }
+
     if ($isAjax) {
-        echo json_encode(['success'=>false,'errors'=>$errors]);
+        echo json_encode(['success' => false, 'errors' => $errors]);
         exit;
     }
 }
 
-// After handling POST, or on GET, load the item's current details:
+// On GET, load current item
 $stmt = $mysqli->prepare("SELECT * FROM iBayItems WHERE itemId=?");
 $stmt->bind_param("s", $itemId);
 $stmt->execute();

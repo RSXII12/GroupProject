@@ -21,11 +21,6 @@ if (!$data) {
 $itemId  = $data['itemId'] ?? '';
 $bidInput = $data['bid'] ?? '';
 
-// validate
-if (!preg_match('/^[a-zA-Z0-9]+$/', $itemId)) {// Validate item ID format (alphanumeric only)
-    echo json_encode(['success'=>false,'error'=>'Invalid item ID.']);
-    exit;
-}
 if (!is_numeric($bidInput) || $bidInput < 0) {// Validate bid is numeric and non-negative
     echo json_encode(['success'=>false,'error'=>'Bid must be a non-negative number.']);
     exit;

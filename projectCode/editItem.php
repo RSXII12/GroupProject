@@ -88,16 +88,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Postage must be a non-negative number.";
     }
 
-    // Handle new images
+    // Handle new images with MIME validation
     $newImages = [];
     if (!empty($_FILES['images']['name'][0])) {
         $count = count($_FILES['images']['name']);
         if ($count > 2) {
             $errors[] = "You can only upload up to 2 photos.";
         } else {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
             for ($i = 0; $i < $count; $i++) {
                 if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
-                    $newImages[] = file_get_contents($_FILES['images']['tmp_name'][$i]);
+                    $tmpName = $_FILES['images']['tmp_name'][$i];
+                    $mime    = $finfo->file($tmpName);
+                    // Allow only jpeg, png, webp
+                    if (!in_array($mime, ['image/jpeg','image/png','image/webp'], true)) {
+                        $errors[] = "Image #".($i+1)." must be JPEG, PNG or WebP.";
+                        continue;
+                    }
+                    $newImages[] = file_get_contents($tmpName);
                 } else {
                     $errors[] = "Error uploading image #" . ($i + 1) . ".";
                 }
@@ -159,6 +167,7 @@ $item = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 $mysqli->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,7 +243,7 @@ $mysqli->close();
     <div class="form-group">
       <label>Upload Photos (max 2)</label>
       <input type="file" id="images" name="images[]" accept="image/*" multiple>
-      <div class="error" id="imagesError">Please upload up to 2 photos.</div>
+      <div class="error" id="imagesError">Please upload up to 2 photos of type JPEG, PNG or WebP.</div>
     </div>
 
     <?php if ($existingImages): ?>
@@ -257,17 +266,6 @@ $mysqli->close();
 
 <script>
 $(function(){
-  //  Hide all .error divs initially
-  //  Pre-select the category in the dropdown
-  //  Initialize description counter
-  //  Define validators for each field
-  //  Attach live validation handlers (input/change events)
-  //  Special handler for #images change to clear old preview and show new thumbnails
-  //  AJAX form submission:
-  //     Prevent default
-  //     Re-validate everything
-  //     If OK, send FormData via POST to same URL
-  //     On success, redirect or show JSON errors
   $('.error').hide();
 
   // set current category
@@ -278,58 +276,63 @@ $(function(){
   cnt.text(`${desc.val().length} / 1000`);
   desc.on('input', ()=> cnt.text(`${desc.val().length} / 1000`));
 
+  // Allowed image MIME types
+  const ALLOWED_TYPES = ['image/jpeg','image/png','image/webp'];
+
   // validators
   const validators = {
     title: v => v.length >= 4,
     category: v => v !== '',
-    description: v => v.length < 1000,
+    description: v => v.length <= 1000,
     price: v => !isNaN(v) && v > 0 && v <= 5000,
     postage: v => !isNaN(v) && v >= 0,
-    images: () => $('#images')[0].files.length <= 2
+    images: () => {
+      const files = $('#images')[0].files;
+      if (files.length < 1 || files.length > 2) return false;
+      for (let f of files) {
+        if (!ALLOWED_TYPES.includes(f.type)) return false;
+      }
+      return true;
+    }
   };
 
-  // live check
+  // live validation
   $('#title').on('input', ()=> $('#titleError').toggle(!validators.title($('#title').val().trim())));
   $('#category').on('change', ()=> $('#categoryError').toggle(!validators.category($('#category').val())));
   $('#price').on('input', ()=> $('#priceError').toggle(!validators.price($('#price').val().trim())));
   $('#postage').on('input', ()=> $('#postageError').toggle(!validators.postage($('#postage').val().trim())));
+  
   $('#images').on('change', function() {
-  const preview = $('#photo-preview');
-  
-  preview.empty();
+    const preview = $('#photo-preview');
+    preview.empty();
 
-  const files = this.files;
-  
-  if (files.length < 1 || files.length > 2) {
-    $('#imagesError').show();
-    // leave preview empty
-    return;
-  } else {
-    $('#imagesError').hide();
-  }
+    const files = this.files;
+    // validate count and type
+    if (files.length < 1 || files.length > 2 ||
+        Array.from(files).some(f => !ALLOWED_TYPES.includes(f.type))) {
+      $('#imagesError').show();
+      return;
+    } else {
+      $('#imagesError').hide();
+    }
 
-  
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      $('<img>')
-        .attr('src', e.target.result)
-        .css({ width: '100px', margin: '0 5px' })
-        .appendTo(preview);
-    };
-    reader.readAsDataURL(file);
+    // render thumbnails
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => $('<img>').attr('src', e.target.result)
+                                   .css({ width: '100px', margin: '0 5px' })
+                                   .appendTo(preview);
+      reader.readAsDataURL(file);
+    });
   });
-});
 
-  // submit
+  // form submission via AJAX
   $('#edit-form').on('submit', function(e){
     e.preventDefault();
     let ok = true;
     $.each(validators, (key, fn) => {
       const val = key==='images'? null : $(`#${key}`).val().trim();
-      if (!fn(val)) {
-        $(`#${key}Error`).show(); ok = false;
-      }
+      if (!fn(val)) { $(`#${key}Error`).show(); ok = false; }
     });
     if (!ok) return;
 

@@ -275,6 +275,28 @@ $(function(){
       .fail(() => showMessage("Server error. Try again later."));
     });
   }
+  $('.slide img').css('cursor','pointer').on('click', function(){
+    $('#lightbox-img').attr('src', this.src);
+    $('#lightbox').fadeIn();
+  });
+  $('.lightbox-close').on('click', ()=> $('#lightbox').fadeOut());
+  $('#lightbox').on('click', e => {
+    if (e.target.id === 'lightbox') $('#lightbox').fadeOut();
+  });
+
+  // --- SIMPLE SLIDER ---
+  let currentIndex = 0;
+  const slides = $('.slide');
+  $('.next').on('click', function(){
+    slides.eq(currentIndex).removeClass('active');
+    currentIndex = (currentIndex + 1) % slides.length;
+    slides.eq(currentIndex).addClass('active');
+  });
+  $('.prev').on('click', function(){
+    slides.eq(currentIndex).removeClass('active');
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    slides.eq(currentIndex).addClass('active');
+  });
 });
 </script>
 </body>

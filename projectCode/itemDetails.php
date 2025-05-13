@@ -5,7 +5,7 @@ date_default_timezone_set('Europe/London');
 session_start();
 
 // Validate and fetch 'id' parameter
-$itemId = $_GET['id'];
+$itemId = $_GET['id'] ?? '';
 
 // Database connection
 $servername = "sci-project.lboro.ac.uk";
@@ -47,7 +47,7 @@ $stmt = $mysqli->prepare(
 );
 $stmt->bind_param('s', $item['userId']);
 $stmt->execute();
-$member = $stmt->get_result()->fetch_assoc();
+$member     = $stmt->get_result()->fetch_assoc();
 $postcode   = $member['postcode'] ?? '';
 $sellerName = $member['name']     ?? 'Unknown seller';
 $stmt->close();
@@ -61,7 +61,7 @@ $stmt = $mysqli->prepare(
 );
 $stmt->bind_param('s', $itemId);
 $stmt->execute();
-$res = $stmt->get_result();
+$res    = $stmt->get_result();
 $images = [];
 while ($row = $res->fetch_assoc()) {
     $images[] = 'data:image/jpeg;base64,' . base64_encode($row['image']);
@@ -79,7 +79,7 @@ $mysqli->close();
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
-    /* styles (has to be here for some reason) */
+    /* Base styles */
     html { box-sizing: border-box; }
     *, *::before, *::after { box-sizing: inherit; }
     body {
@@ -101,8 +101,8 @@ $mysqli->close();
       flex: 1; display: flex; align-items: center; justify-content: center;
     }
     .header-left { justify-content: flex-start; padding-left: 3%; }
-    .header-right { justify-content: flex-end; padding-right: 3%; }
     .header-left img { width: 30%; height: auto; object-fit: cover; }
+
     main.page-content {
       flex: 1 1 auto;
       overflow-y: auto;
@@ -113,31 +113,82 @@ $mysqli->close();
     }
     .flex { display: flex; gap: 2em; }
     @media (max-width: 768px) { .flex { flex-direction: column; } }
+
+    /* Image slider */
     .images {
       position: relative;
-      width: 400px;
-      height: 400px;
+      width: 400px; height: 400px;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: transparent;
     }
-    .images .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
-    .images .slide.active { display: flex; align-items: center; justify-content: center; }
-    .images .slide img { max-width: 100%; max-height: 100%; display: block; }
-    .images button { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 0.5em; cursor: pointer; }
+    .images .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: none;
+      align-items: center; justify-content: center;
+    }
+    .images .slide.active { display: flex; }
+    .images .slide img { max-width: 100%; max-height: 100%; }
+
+    .images button {
+      position: absolute; top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.5);
+      color: #fff; border: none;
+      padding: 0.5em; cursor: pointer;
+    }
     .images .prev { left: 0.5em; }
     .images .next { right: 0.5em; }
+
+    /* Details */
     .details { flex: 1; }
     .details p { margin: 0.5em 0; }
-    form.bid { margin: 1em 0; padding: 0.5em; border: 1px solid #888; display: inline-block; }
+
+    form.bid {
+      margin: 1em 0; padding: 0.5em;
+      border: 1px solid #888; display: inline-block;
+    }
     form.bid input[type="text"] { width: 8em; }
-    #map { margin-top: 1em; width: 100%; height: 300px; border: 1px solid #999; }
-    .lightbox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); z-index: 10000; }
-    .lightbox img { max-width: 90%; max-height: 90%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-    .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 2rem; color: #fff; cursor: pointer; user-select: none; }
-    .footer { flex: 0 0 auto; background: #2f64ad; color: #fff; text-align: center; padding: 10px; font-size: 12px; }
+
+    /* Map */
+    #map {
+      margin-top: 1em;
+      width: 100%; height: 300px;
+      border: 1px solid #999;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: flex;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+      visibility: hidden; opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10000;
+    }
+    .lightbox.show {
+      visibility: visible; opacity: 1;
+    }
+    .lightbox img {
+      max-width: 90%; max-height: 90%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 30px;
+      font-size: 2rem; color: #fff; cursor: pointer;
+      user-select: none;
+    }
+
+    /* Footer */
+    .footer {
+      flex: 0 0 auto;
+      background: #2f64ad; color: #fff;
+      text-align: center; padding: 10px; font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -152,13 +203,13 @@ $mysqli->close();
     <div class="flex">
       <div class="images">
         <?php foreach ($images as $i => $src): ?>
-        <div class="slide<?= $i === 0 ? ' active' : '' ?>">
-          <img src="<?= $src ?>" alt="Item image <?= $i+1 ?>">
-        </div>
+          <div class="slide<?= $i === 0 ? ' active' : '' ?>">
+            <img src="<?= $src ?>" alt="Item image <?= $i+1 ?>">
+          </div>
         <?php endforeach; ?>
-        <?php if (count($images) === 2): ?>
-        <button class="prev">&larr;</button>
-        <button class="next">&rarr;</button>
+        <?php if (count($images) > 1): ?>
+          <button class="prev">&larr;</button>
+          <button class="next">&rarr;</button>
         <?php endif; ?>
       </div>
       <div class="details">
@@ -180,124 +231,123 @@ $mysqli->close();
         <div id="bid-message" style="margin:1em 0;color:red;"></div>
       </div>
     </div>
-
-    <!-- Leaflet map initialization -->
     <div id="map"></div>
   </main>
 
   <div id="lightbox" class="lightbox">
     <span class="lightbox-close">&times;</span>
-    <img id="lightbox-img" src="" alt="Enlarged item">
+    <img id="lightbox-img" src="" alt="Enlarged image">
   </div>
 
   <div class="footer">&copy; 2025 iBay Inc. All rights reserved</div>
 
-  <!-- SCRIPTS -->
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-$(function(){
-  // Map init (unchanged) …
-  (function(){
-    fetch(
-      'https://nominatim.openstreetmap.org/search?format=json&postalcode=' +
-      encodeURIComponent("<?= addslashes($postcode) ?>") +
-      '&countrycodes=gb'
-    )
-    .then(r => r.json())
-    .then(data => {
-      if (!data.length) return;
-      const lat = parseFloat(data[0].lat),
-            lon = parseFloat(data[0].lon);
-      const map = L.map('map').setView([lat, lon], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-      L.marker([lat, lon]).addTo(map);
-      L.circle([lat, lon], { radius: 1000 }).addTo(map);
-    })
-    .catch(console.error);
-  })();
-
-  // Inject server‐side data into JS
-  const USER_ID     = <?= json_encode($_SESSION['userId'] ?? '') ?>;
-  const SELLER_ID   = <?= json_encode($item['userId']) ?>;
-  const START_PRICE = <?= json_encode((float)$item['price']) ?>;
-  const CURRENT_BID = <?= json_encode((float)$item['currentBid']) ?>;
-  const FINISH_TIME = new Date(<?= json_encode($item['finish']) ?>);
-  const ITEM_ID     = <?= json_encode($itemId) ?>;
-
-  // Bid form logic
-  const form = $('form.bid');
-  function showMessage(msg, isError = true) {
-    $('#bid-message')
-      .text(msg)
-      .css('color', isError ? 'red' : 'green');
-  }
-
-  if (!USER_ID) {
-    form.find('input,button').prop('disabled', true);
-    showMessage('Please log in to bid.');
-  } else if (USER_ID === SELLER_ID) {
-    form.find('input,button').prop('disabled', true);
-    showMessage("You cannot bid on your own listing.");
-  } else {
-    form.on('submit', function(e){
-      e.preventDefault();
-      $('#bid-message').empty();
-      let bidVal = $('#bid').val().trim();
-      if (!/^\d+(\.\d{1,2})?$/.test(bidVal)) {
-        return showMessage("Enter a valid amount up to two decimals.");
-      }
-      bidVal = parseFloat(bidVal);
-      if (new Date() > FINISH_TIME) {
-        return showMessage("Auction has ended.");
-      }
-      const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
-      if (bidVal < minAllowed) {
-        return showMessage(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
-      }
-
-      // Submit via AJAX JSON
-      $.ajax({
-        url: 'placeBid.php',
-        type: 'POST',
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        data: JSON.stringify({ itemId: ITEM_ID, bid: bidVal })
+  $(function(){
+    // Map initialization
+    (function(){
+      fetch(
+        'https://nominatim.openstreetmap.org/search?format=json&postalcode=' +
+        encodeURIComponent("<?= addslashes($postcode) ?>") +
+        '&countrycodes=gb'
+      )
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) return;
+        const lat = parseFloat(data[0].lat),
+              lon = parseFloat(data[0].lon);
+        const map = L.map('map').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19 }).addTo(map);
+        L.marker([lat, lon]).addTo(map);
+        L.circle([lat, lon], { radius: 1000 }).addTo(map);
       })
-      .done(resp => {
-        if (resp.success) {
-          $('#current-bid').text(resp.newBid.toFixed(2));
-          showMessage("Bid placed!", false);
-          $('#bid').val('');
-        } else {
-          showMessage(resp.error);
+      .catch(console.error);
+    })();
+
+    // Inject server-side data into JS
+    const USER_ID     = <?= json_encode($_SESSION['userId'] ?? '') ?>;
+    const SELLER_ID   = <?= json_encode($item['userId']) ?>;
+    const START_PRICE = <?= json_encode((float)$item['price']) ?>;
+    const CURRENT_BID = <?= json_encode((float)$item['currentBid']) ?>;
+    const FINISH_TIME = new Date(<?= json_encode($item['finish']) ?>);
+    const ITEM_ID     = <?= json_encode($itemId) ?>;
+
+    // Bid form logic
+    const form = $('form.bid');
+    function showMessage(msg, isError = true) {
+      $('#bid-message').text(msg).css('color', isError ? 'red' : 'green');
+    }
+
+    if (!USER_ID) {
+      form.find('input,button').prop('disabled', true);
+      showMessage('Please log in to bid.');
+    } else if (USER_ID === SELLER_ID) {
+      form.find('input,button').prop('disabled', true);
+      showMessage("You cannot bid on your own listing.");
+    } else {
+      form.on('submit', function(e){
+        e.preventDefault();
+        $('#bid-message').empty();
+        let bidVal = $('#bid').val().trim();
+        if (!/^\d+(\.\d{1,2})?$/.test(bidVal)) {
+          return showMessage("Enter a valid amount up to two decimals.");
         }
-      })
-      .fail(() => showMessage("Server error. Try again later."));
-    });
-  }
-  $('.slide img').css('cursor','pointer').on('click', function(){
-    $('#lightbox-img').attr('src', this.src);
-    $('#lightbox').fadeIn();
-  });
-  $('.lightbox-close').on('click', ()=> $('#lightbox').fadeOut());
-  $('#lightbox').on('click', e => {
-    if (e.target.id === 'lightbox') $('#lightbox').fadeOut();
-  });
+        bidVal = parseFloat(bidVal);
+        if (new Date() > FINISH_TIME) {
+          return showMessage("Auction has ended.");
+        }
+        const minAllowed = Math.max(START_PRICE, CURRENT_BID) + 0.01;
+        if (bidVal < minAllowed) {
+          return showMessage(`Your bid must be at least £${minAllowed.toFixed(2)}.`);
+        }
 
-  // --- SIMPLE SLIDER ---
-  let currentIndex = 0;
-  const slides = $('.slide');
-  $('.next').on('click', function(){
-    slides.eq(currentIndex).removeClass('active');
-    currentIndex = (currentIndex + 1) % slides.length;
-    slides.eq(currentIndex).addClass('active');
+        // Submit via AJAX JSON
+        $.ajax({
+          url: 'placeBid.php',
+          type: 'POST',
+          contentType: 'application/json; charset=utf-8',
+          dataType: 'json',
+          data: JSON.stringify({ itemId: ITEM_ID, bid: bidVal })
+        })
+        .done(resp => {
+          if (resp.success) {
+            $('#current-bid').text(resp.newBid.toFixed(2));
+            showMessage("Bid placed!", false);
+            $('#bid').val('');
+          } else {
+            showMessage(resp.error);
+          }
+        })
+        .fail(() => showMessage("Server error. Try again later."));
+      });
+    }
+
+    // Image slider functionality
+    let currentIndex = 0;
+    const slides = $('.slide');
+    $('.next').on('click', function(){
+      slides.eq(currentIndex).removeClass('active');
+      currentIndex = (currentIndex + 1) % slides.length;
+      slides.eq(currentIndex).addClass('active');
+    });
+    $('.prev').on('click', function(){
+      slides.eq(currentIndex).removeClass('active');
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      slides.eq(currentIndex).addClass('active');
+    });
+
+    // Lightbox open/close
+    $('.slide img').css('cursor','pointer').on('click', function(){
+      $('#lightbox-img').attr('src', this.src);
+      $('#lightbox').addClass('show');
+    });
+    $('.lightbox-close, #lightbox').on('click', function(e){
+      if (e.target.id === 'lightbox' || $(this).hasClass('lightbox-close')) {
+        $('#lightbox').removeClass('show');
+      }
+    });
   });
-  $('.prev').on('click', function(){
-    slides.eq(currentIndex).removeClass('active');
-    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-    slides.eq(currentIndex).addClass('active');
-  });
-});
-</script>
+  </script>
 </body>
 </html>

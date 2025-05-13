@@ -91,12 +91,12 @@ try {
     }
 
     // Prepare DB connection
-    $conn = new mysqli(
-        'sci-project.lboro.ac.uk',
-        '295group6',
-        'wHiuTatMrdizq3JfNeAH',
-        '295group6'
-    );
+    $servername = "sci-project.lboro.ac.uk";
+$username   = "295group6";
+$password   = "wHiuTatMrdizq3JfNeAH";
+$dbname     = "295group6";
+// Connect to MySQL
+$conn = new mysqli($servername, $username, $password, $dbname);
     if ($conn->connect_error) {
         error_log('DB connect failed: ' . $conn->connect_error);
         throw new Exception('Internal server error.');
